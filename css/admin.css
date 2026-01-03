@@ -1,0 +1,978 @@
+/* ================================
+   admin.css (CLEAN)
+   - style.css sudah dimuat duluan
+   - file ini fokus override admin + mobile drawer
+================================ */
+
+/* Token khusus admin */
+:root{
+  --admin-sidebar-w: 260px;
+  --admin-top-offset: 86px; /* samakan dengan tinggi header sticky kamu */
+}
+
+/* Jarak konten dari header (admin only, aman karena admin.css hanya dipakai admin) */
+main.main{
+  padding-top: 18px;
+}
+
+/* Layout utama */
+.admin-layout{
+  display: grid;
+  grid-template-columns: var(--admin-sidebar-w) 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.admin-content{ min-width: 0; }
+
+/* Sidebar (desktop) */
+.admin-sidebar{
+  position: sticky;
+  top: var(--admin-top-offset);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+}
+
+/* Judul sidebar */
+.admin-sidebar-title{
+  margin: 4px 10px 12px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Nav link */
+.admin-nav a{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: var(--text-muted);
+  font-weight: 800;
+  font-size: 14px;
+  border: 1px solid transparent;
+  transition: background .15s ease, border-color .15s ease, transform .15s ease, color .15s ease;
+}
+.admin-nav a:hover{
+  background: rgba(0, 154, 222, 0.08);
+  border-color: rgba(0, 154, 222, 0.25);
+  color: var(--text-main);
+  transform: translateY(-1px);
+}
+.admin-nav a.active{
+  background: rgba(0, 154, 222, 0.12);
+  border-color: rgba(0, 154, 222, 0.35);
+  color: var(--brand-blue);
+}
+
+/* Sidebar footer buttons */
+.admin-sidebar-foot{
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Komponen umum yang dipakai dashboard */
+.muted{ color: var(--text-muted); }
+
+.panel{
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+}
+.line{
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 14px 0;
+}
+
+/* Actions */
+.actions{
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.action{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text-main);
+  font-weight: 900;
+  font-size: 13px;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.action:hover{
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+  border-color: rgba(0,0,0,0.10);
+}
+.action.accent{
+  background: var(--brand-blue);
+  color: #fff;
+  border-color: transparent;
+}
+.action.accent:hover{ background: #0081bf; }
+.action.action-block{ width: 100%; }
+
+/* KPI cards */
+.admin-cards{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.admin-card{
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+}
+.admin-card h3{ margin: 0 0 6px; font-size: 14px; font-weight: 950; }
+.admin-card p{ margin: 0; color: var(--text-muted); font-size: 13px; }
+.admin-card .kpi{ font-size: 28px; font-weight: 950; margin-top: 10px; color: var(--brand-red); }
+.admin-card .kpi.kpi-blue{ color: var(--brand-blue); }
+
+/* Table */
+.admin-table-wrap{ overflow: auto; border-radius: var(--radius); }
+.admin-table{
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+}
+.admin-table th, .admin-table td{
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  vertical-align: top;
+  white-space: nowrap;
+}
+.admin-table th{
+  font-size: 12px;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: #F8FAFC;
+}
+.admin-table tr:last-child td{ border-bottom: 0; }
+.admin-table tr:hover td{ background: rgba(0, 154, 222, 0.04); }
+.td-title{ white-space: normal; min-width: 260px; }
+.td-actions{ text-align: right; }
+.row-title{ font-weight: 950; }
+
+/* Badge status */
+.badge-status{
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text-muted);
+}
+.badge-status.is-active{ background: rgba(0, 154, 222, 0.10); border-color: rgba(0,154,222,.35); color: var(--brand-blue); }
+.badge-status.is-warn{ background: rgba(247, 148, 29, 0.12); border-color: rgba(247,148,29,.45); color: #b45309; }
+.badge-status.is-danger{ background: rgba(215, 25, 32, 0.10); border-color: rgba(215,25,32,.40); color: var(--brand-red); }
+.badge-status.is-muted{ background: #F8FAFC; }
+
+/* ===== MOBILE DRAWER (sidebar) ===== */
+.admin-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  z-index: 150;
+}
+
+/* Tombol toggle sidebar (muncul di mobile) */
+.admin-sidebar-toggle{
+  display: none;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 950;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 980px){
+  .admin-sidebar-toggle{ display: inline-flex; align-items: center; }
+
+  .admin-layout{
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* sidebar jadi drawer FIXED (override total) */
+  .admin-sidebar{
+    position: fixed !important;
+    top: var(--admin-top-offset);
+    left: 12px;
+    width: min(320px, calc(100vw - 24px));
+    bottom: 12px;
+    overflow: auto;
+    z-index: 200;
+
+    transform: translateX(-120%);
+    transition: transform .18s ease;
+  }
+
+  body.admin-sidebar-open .admin-sidebar{
+    transform: translateX(0);
+  }
+
+  /* tombol jadi full width biar gampang di-tap */
+  .actions{ width: 100%; }
+  .action{ width: 100%; justify-content: center; }
+
+  /* KPI 1 kolom */
+  .admin-cards{ grid-template-columns: 1fr; }
+
+  /* tabel swipe */
+  .admin-table{ min-width: 760px; }
+}
+
+/* ===== HEADER NAV (hamburger) di mobile ===== */
+@media (max-width: 768px){
+  header .nav{
+    display: none;
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    top: var(--admin-top-offset);
+    flex-direction: column;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    box-shadow: var(--shadow);
+    z-index: 300;
+  }
+  body.nav-open header .nav{ display: flex; }
+  header .nav a{ padding: 12px; border-radius: 12px; border: 1px solid var(--border); }
+}
+/* ===== FINAL OVERRIDE: SIDEBAR DRAWER MOBILE ===== */
+
+:root{
+  --admin-top-offset: 86px; /* sesuaikan tinggi header */
+}
+
+.admin-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  z-index: 150;
+}
+
+/* tombol toggle sidebar (muncul di mobile) */
+.admin-sidebar-toggle{
+  display:none;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px 12px;
+  font-weight:950;
+  cursor:pointer;
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 980px){
+  .admin-sidebar-toggle{ display:inline-flex; align-items:center; }
+
+  .admin-layout{
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* PAKSA sidebar jadi drawer */
+  .admin-sidebar{
+    position: fixed !important;
+    top: var(--admin-top-offset);
+    left: 12px;
+    width: min(320px, calc(100vw - 24px));
+    bottom: 12px;
+    overflow: auto;
+    z-index: 200;
+
+    transform: translateX(-120%);
+    transition: transform .18s ease;
+  }
+
+  body.admin-sidebar-open .admin-sidebar{
+    transform: translateX(0);
+  }
+}
+
+/* Active link (selaras brand) */
+.admin-nav a.active{
+  background: rgba(0, 154, 222, 0.12);
+  border: 1px solid rgba(0, 154, 222, 0.25);
+  color: var(--brand-blue);
+}
+/* ===== FIX: overlay jangan nutup menu header ===== */
+.site-header.admin-topbar{
+  z-index: 600; /* lebih tinggi dari overlay */
+}
+
+.admin-overlay{
+  z-index: 500; /* tetap di bawah header */
+}
+
+/* pastikan dropdown nav di mobile ada di atas semuanya */
+@media (max-width: 768px){
+  header.admin-topbar .nav{
+    z-index: 700;
+  }
+}
+
+/* kalau sidebar drawer kamu fixed, pastikan dia di atas overlay juga */
+@media (max-width: 980px){
+  .admin-sidebar{
+    z-index: 800;
+  }
+}
+/* =========================
+   PROPERTIES PAGE REDESIGN
+========================= */
+
+/* kasih jarak dari header biar judul tidak “nempel” */
+.admin-pagehead-spaced{
+  margin-top: 6px;
+}
+
+/* KPI grid */
+.admin-kpis{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 12px 0 14px;
+}
+
+.admin-kpi{
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px;
+  min-width: 0;
+}
+
+.admin-kpi-label{
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.admin-kpi-value{
+  margin-top: 6px;
+  font-size: 24px;
+  font-weight: 950;
+  letter-spacing: -0.3px;
+}
+
+.admin-kpi-sub{
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+/* warna aksen */
+.admin-kpi.active .admin-kpi-value{ color: var(--brand-blue); }
+.admin-kpi.draft  .admin-kpi-value{ color: #b45309; }
+.admin-kpi.sold   .admin-kpi-value{ color: var(--brand-red); }
+
+/* Filter form */
+.admin-filters{
+  display:grid;
+  grid-template-columns: 1fr 240px auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.admin-filters .field{ display:grid; gap: 6px; }
+.admin-filters .label{
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--text-muted);
+}
+
+.admin-filters-actions{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* Actions cell */
+.admin-actions-cell{
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.admin-inline{ margin:0; display:inline-flex; }
+
+/* status select lebih compact */
+.status-select{
+  min-width: 130px;
+}
+
+/* Danger button style */
+.action.danger{
+  color: var(--brand-red);
+  border-color: rgba(215, 25, 32, 0.35);
+  background: #fff;
+}
+.action.danger:hover{
+  background: rgba(215, 25, 32, 0.06);
+  border-color: rgba(215, 25, 32, 0.45);
+}
+
+/* Mobile */
+@media (max-width: 980px){
+  .admin-kpis{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-filters{ grid-template-columns: 1fr; }
+  .admin-filters-actions{ justify-content: flex-start; }
+}
+
+@media (max-width: 520px){
+  .admin-kpis{ grid-template-columns: 1fr; }
+  .admin-actions-cell{
+    justify-content: flex-start;
+  }
+  .admin-actions-cell .action,
+  .admin-actions-cell .select{
+    width: 100%;
+  }
+  .status-select{ width: 100%; }
+}
+
+
+/* =========================
+   FIX SYSTEM FIELD (GLOBAL)
+   -> wajib supaya property_edit rapi
+========================= */
+.field{
+  display:flex;
+  flex-direction:column;
+  gap: 6px;
+  min-width: 0; /* mencegah overflow dalam grid */
+}
+.label{
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--text-muted);
+  letter-spacing: .2px;
+}
+.help, .hint{
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+/* input/select admin harus full width dan konsisten radius */
+.input, .select, textarea.input{
+  width: 100%;
+  border-radius: 10px; /* selaras admin card */
+}
+
+/* =========================
+   PROPERTY EDIT LAYOUT (HARDENED)
+========================= */
+.admin-form-layout{
+  display:grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 360px);
+  gap: 14px;
+  align-items: start;
+}
+
+.admin-side{ min-width:0; }
+
+/* Grid general */
+.admin-grid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-grid-2{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-grid-4{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* Textarea enak */
+.admin-textarea{
+  min-height: 140px;
+  resize: vertical;
+}
+
+/* Image grid (lebih stabil) */
+.img-grid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.img-item{
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.img-thumb{
+  position: relative;
+  display:block;
+  aspect-ratio: 4 / 3;
+  background: #F8FAFC;
+  overflow: hidden;
+}
+
+.img-thumb img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display:block;
+}
+
+.img-actions{
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
+  gap: 10px;
+  padding: 10px;
+}
+
+/* ============ BREAKPOINTS (INI YANG BIKIN RAPI) ============ */
+
+/* di <= 1100px: side panel turun ke bawah (lebih natural) */
+@media (max-width: 1100px){
+  .admin-form-layout{
+    grid-template-columns: 1fr;
+  }
+}
+
+/* di <= 900px: form 2 kolom -> 1 kolom (biar tidak sempit) */
+@media (max-width: 900px){
+  .admin-grid,
+  .admin-grid-2{
+    grid-template-columns: 1fr;
+  }
+  .admin-grid-4{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* di <= 520px: image grid 1 kolom */
+@media (max-width: 520px){
+  .img-grid{
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* =========================
+   SALES PAGE (LIST CARD)
+========================= */
+
+/* jika admin-filters belum punya layout ideal di sales.php */
+.admin-filters{
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+.admin-filters-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+/* Biar button yang pakai class .action di form tampil benar */
+button.action{
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+/* Danger button (kalau belum ada) */
+.action.danger{
+  color: var(--brand-red);
+  border-color: rgba(215, 25, 32, 0.35);
+  background: #fff;
+}
+.action.danger:hover{
+  background: rgba(215, 25, 32, 0.06);
+  border-color: rgba(215, 25, 32, 0.45);
+}
+
+/* List layout */
+.sales-list{
+  display:flex;
+  flex-direction:column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* Card sales: 3 kolom (left ident) | meta | actions */
+.sales-item{
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.sales-left{
+  display:flex;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+}
+
+.sales-avatar{
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  background: #EEF2F7;
+  flex: 0 0 auto;
+}
+
+.sales-avatar-fallback{
+  display:grid;
+  place-items:center;
+  font-weight: 950;
+  color: var(--text-muted);
+}
+
+.sales-ident{
+  min-width: 0;
+}
+
+.sales-name{
+  font-weight: 950;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sales-title{
+  margin-top: 2px;
+}
+
+.sales-updated{
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+/* Meta kanan */
+.sales-meta{
+  display:grid;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.sales-meta-row{
+  display:flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.sales-meta-k{
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.sales-meta-v{
+  font-weight: 800;
+  color: var(--text-main);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* Actions */
+.sales-actions{
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/* Mobile */
+@media (max-width: 980px){
+  .admin-filters{
+    grid-template-columns: 1fr;
+  }
+  .admin-filters-actions{
+    justify-content: flex-start;
+  }
+
+  .sales-item{
+    grid-template-columns: 1fr;
+  }
+  .sales-actions{
+    justify-content: flex-start;
+  }
+  .sales-meta-row{
+    justify-content: flex-start;
+  }
+  .sales-meta-v{
+    text-align: left;
+  }
+}
+
+/* Extra small */
+@media (max-width: 520px){
+  .sales-actions .action{
+    width: 100%;
+    justify-content: center;
+  }
+}
+/* =========================
+   SALES EDIT FORM
+========================= */
+
+.form-field{ display:grid; gap:6px; }
+.form-label{
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--text-muted);
+}
+.form-help{
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.sales-edit-form .admin-form-layout{
+  grid-template-columns: 1fr 360px;
+}
+
+.sales-photo-panel{
+  box-shadow: none; /* panel sudah di dalam panel utama */
+  border-color: var(--border);
+}
+
+.sales-photo-head{
+  display:flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.sales-photo-title{
+  font-weight: 950;
+  color: var(--text-main);
+}
+.sales-photo-sub{ font-size: 12px; }
+
+.sales-photo-preview{
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #F8FAFC;
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
+  display:grid;
+  place-items:center;
+}
+
+.sales-photo-preview img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display:block;
+}
+
+.sales-photo-fallback{
+  width: 84px;
+  height: 84px;
+  border-radius: 22px;
+  border: 1px solid var(--border);
+  background: #fff;
+  box-shadow: var(--shadow);
+  display:grid;
+  place-items:center;
+  font-weight: 950;
+  color: var(--text-muted);
+  font-size: 28px;
+}
+
+/* Responsive */
+@media (max-width: 980px){
+  .sales-edit-form .admin-form-layout{
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================
+   SETTINGS PAGE
+========================= */
+
+.admin-notice{
+  border: 1px solid rgba(6, 95, 70, 0.25);
+  background: rgba(6, 95, 70, 0.06);
+  color: #065f46;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 900;
+  font-size: 13px;
+  margin: 10px 0 14px;
+}
+.admin-notice.success{}
+
+/* gunakan label helper jika belum ada */
+.form-field{ display:grid; gap:6px; }
+.form-label{
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--text-muted);
+}
+.form-help{
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Layout 2 kolom: form + panel logo */
+.settings-layout{
+  display:grid;
+  grid-template-columns: 1fr 360px;
+  gap: 14px;
+  align-items:start;
+}
+
+.settings-side{
+  box-shadow:none;
+  border-color: var(--border);
+}
+
+.settings-side-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap: 10px;
+}
+
+.settings-side-title{ font-weight: 950; color: var(--text-main); }
+.settings-side-sub{ font-size: 12px; }
+
+/* Preview logo */
+.settings-logo-preview{
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #F8FAFC;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  display:grid;
+  place-items:center;
+  padding: 12px;
+}
+
+.settings-logo-preview img{
+  max-width: 100%;
+  max-height: 120px;
+  object-fit: contain;
+  display:block;
+}
+
+.settings-logo-fallback{
+  height: 64px;
+  padding: 0 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: #fff;
+  box-shadow: var(--shadow);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight: 950;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+}
+
+.settings-remove{
+  margin-top: 12px;
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  font-weight: 900;
+  color: var(--text-muted);
+}
+
+/* responsive */
+@media (max-width: 980px){
+  .settings-layout{ grid-template-columns: 1fr; }
+}
+/* =========================
+   FIX: jarak tombol "← Kembali" vs section pertama (Informasi Utama)
+   Berlaku untuk semua pagehead admin
+========================= */
+
+.admin-pagehead{
+  align-items: flex-start;     /* sebelumnya sering flex-end -> bikin tombol turun */
+  flex-wrap: wrap;             /* biar kalau sempit tidak mepet */
+  row-gap: 10px;
+  column-gap: 14px;
+  margin-bottom: 18px;         /* tambah jarak ke konten bawah */
+}
+
+/* tombol area kanan jangan terlalu "nempel" ke bawah */
+.admin-pagehead .admin-quick{
+  margin-top: 2px;
+}
+
+/* kalau setelah pagehead langsung layout form/panel, kasih jarak ekstra */
+.admin-pagehead + .panel,
+.admin-pagehead + .admin-form-layout{
+  margin-top: 6px;
+}
+
+/* Mobile: actions kanan turun rapi dan tidak mepet */
+@media (max-width: 520px){
+  .admin-pagehead .admin-quick{
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
