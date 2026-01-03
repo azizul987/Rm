@@ -11,6 +11,16 @@ $siteName = setting('site_name', 'RM Properti') ?? 'RM Properti';
 $tagline  = 'Listing elegan & kontak sales';
 $logoPath = setting('logo_path', null);
 
+if (!isset($page_description) || trim($page_description) === '') {
+  $page_description = $siteName . ' - ' . $tagline;
+}
+if (!isset($page_robots) || trim($page_robots) === '') {
+  $page_robots = 'index, follow';
+}
+if (!isset($page_canonical) || trim($page_canonical) === '') {
+  $page_canonical = current_url();
+}
+
 // Deteksi halaman aktif untuk nav
 $current = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '');
 if ($current === '' || $current === '/') $current = 'index.php';
@@ -24,6 +34,7 @@ function nav_link($href, $label, $current) {
 
 // Title tab browser
 $fullTitle = ($page_title ? ($page_title . ' - ' . $siteName) : $siteName);
+$canonicalUrl = abs_url($page_canonical);
 ?>
 <!doctype html>
 <html lang="id">
@@ -31,6 +42,9 @@ $fullTitle = ($page_title ? ($page_title . ' - ' . $siteName) : $siteName);
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title><?= e($fullTitle) ?></title>
+  <meta name="description" content="<?= e($page_description) ?>" />
+  <meta name="robots" content="<?= e($page_robots) ?>" />
+  <link rel="canonical" href="<?= e($canonicalUrl) ?>" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" href="Assets/logo.png">

@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $email = trim($_POST['email'] ?? '');
   $pass  = (string)($_POST['password'] ?? '');
 
-  $stmt = db()->prepare("SELECT id, email, password_hash FROM users WHERE email = ? LIMIT 1");
+  $stmt = db()->prepare("SELECT id, email, password_hash, role, status FROM users WHERE email = ? LIMIT 1");
   $stmt->execute([$email]);
   $u = $stmt->fetch();
 
@@ -18,6 +18,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     session_regenerate_id(true);
     $_SESSION['user_id'] = (int)$u['id'];
     $_SESSION['user_email'] = $u['email'];
+    $_SESSION['user_role'] = $u['role'] ?? 'editor';
+    $_SESSION['user_status'] = $u['status'] ?? 'active';
     header('Location: index.php');
     exit;
   }

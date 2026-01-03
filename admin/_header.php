@@ -92,3 +92,8 @@ if (!empty($rawLogo)) {
   <div class="admin-overlay" hidden></div>
 
   <main id="main" class="container main">
+    <?php if (is_editor() && is_frozen()): ?>
+      <div class="admin-alert" style="margin-bottom:12px">
+        Akun editor sedang dibekukan. Listing Anda tidak tampil di website publik.
+      </div>
+    <?php endif; ?>

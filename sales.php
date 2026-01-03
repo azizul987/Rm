@@ -29,6 +29,13 @@ $handled = array_values(array_filter($properties, fn($p) => $p['sales_id'] === $
 $salesPhoto = (file_exists(__DIR__ . '/' . $s['photo'])) ? $s['photo'] : svg_placeholder_data_uri($s['name']);
 $waText = "Halo {$s['name']}, saya ingin konsultasi properti dari RM Properti.";
 
+$page_description = str_excerpt((string)($s['bio'] ?? ''), 155);
+$page_og_type = 'profile';
+$page_canonical = base_url() . '/sales.php?id=' . urlencode($s['id']);
+if (!str_starts_with($salesPhoto, 'data:')) {
+  $page_image = $salesPhoto;
+}
+
 include __DIR__ . '/header.php';
 ?>
 
@@ -80,5 +87,18 @@ include __DIR__ . '/header.php';
     </a>
   <?php endforeach; ?>
 </section>
+
+<script type="application/ld+json">
+<?= json_encode([
+  '@context' => 'https://schema.org',
+  '@type' => 'Person',
+  'name' => $s['name'],
+  'jobTitle' => $s['title'] ?? null,
+  'url' => $page_canonical,
+  'image' => !str_starts_with($salesPhoto, 'data:') ? abs_url($salesPhoto) : null,
+  'telephone' => $s['phone'] ?? null,
+  'email' => $s['email'] ?? null,
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>
+</script>
 
 <?php include __DIR__ . '/footer.php'; ?>

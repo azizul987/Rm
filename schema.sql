@@ -6,6 +6,9 @@ CREATE TABLE users (
   email VARCHAR(190) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
   role VARCHAR(30) NOT NULL DEFAULT 'admin',
+  status VARCHAR(20) NOT NULL DEFAULT 'active',
+  credit_limit INT NOT NULL DEFAULT 5,
+  credit_used INT NOT NULL DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
@@ -38,14 +41,24 @@ CREATE TABLE properties (
   building INT NOT NULL DEFAULT 0,
   description TEXT DEFAULT NULL,
   features_json JSON DEFAULT NULL,
+  videos_json JSON DEFAULT NULL,
   status VARCHAR(30) NOT NULL DEFAULT 'active',
   sales_id INT DEFAULT NULL,
+  created_by INT DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_properties_sales
     FOREIGN KEY (sales_id) REFERENCES sales(id)
     ON UPDATE CASCADE ON DELETE SET NULL
+  ,
+  CONSTRAINT fk_properties_created_by
+    FOREIGN KEY (created_by) REFERENCES users(id)
+    ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB;
+
+CREATE INDEX idx_properties_status ON properties(status);
+CREATE INDEX idx_properties_location ON properties(location);
+CREATE INDEX idx_properties_type ON properties(type);
 
 -- PROPERTY IMAGES (gallery)
 CREATE TABLE property_images (
@@ -56,6 +69,42 @@ CREATE TABLE property_images (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_images_property
     FOREIGN KEY (property_id) REFERENCES properties(id)
+    ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- EDITOR SALES ACCESS
+CREATE TABLE editor_sales (
+  editor_id INT NOT NULL,
+  sales_id INT NOT NULL,
+  granted_by INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (editor_id, sales_id),
+  CONSTRAINT fk_editor_sales_user
+    FOREIGN KEY (editor_id) REFERENCES users(id)
+    ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT fk_editor_sales_sales
+    FOREIGN KEY (sales_id) REFERENCES sales(id)
+    ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT fk_editor_sales_granted_by
+    FOREIGN KEY (granted_by) REFERENCES users(id)
+    ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- EDITOR PROPERTY ACCESS
+CREATE TABLE editor_properties (
+  editor_id INT NOT NULL,
+  property_id INT NOT NULL,
+  granted_by INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (editor_id, property_id),
+  CONSTRAINT fk_editor_props_user
+    FOREIGN KEY (editor_id) REFERENCES users(id)
+    ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT fk_editor_props_property
+    FOREIGN KEY (property_id) REFERENCES properties(id)
+    ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT fk_editor_props_granted_by
+    FOREIGN KEY (granted_by) REFERENCES users(id)
     ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB;
 

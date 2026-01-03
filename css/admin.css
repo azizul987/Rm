@@ -13,6 +13,8 @@
 /* Jarak konten dari header (admin only, aman karena admin.css hanya dipakai admin) */
 main.main{
   padding-top: 18px;
+  width: 100%;
+  max-width: 1100px;
 }
 
 /* Layout utama */
@@ -21,6 +23,7 @@ main.main{
   grid-template-columns: var(--admin-sidebar-w) 1fr;
   gap: 16px;
   align-items: start;
+  width: 100%;
 }
 
 .admin-content{ min-width: 0; }
@@ -56,6 +59,9 @@ main.main{
   color: var(--text-muted);
   font-weight: 800;
   font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   border: 1px solid transparent;
   transition: background .15s ease, border-color .15s ease, transform .15s ease, color .15s ease;
 }
@@ -538,6 +544,37 @@ main.main{
   resize: vertical;
 }
 
+.admin-video-inputs{
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.admin-video-inputs .input{
+  flex: 1;
+}
+.video-preview{
+  margin-top: 10px;
+}
+.video-preview .img-thumb{
+  aspect-ratio: 16 / 9;
+}
+.video-thumb{
+  position: relative;
+}
+.video-thumb::after{
+  content: '▶';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 900;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.35);
+  background: linear-gradient(180deg, rgba(15,23,42,0.05), rgba(15,23,42,0.35));
+}
+
 /* Image grid (lebih stabil) */
 .img-grid{
   display:grid;
@@ -573,6 +610,18 @@ main.main{
   align-items:center;
   gap: 10px;
   padding: 10px;
+}
+
+.admin-pagination{
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.admin-pagination .action[aria-disabled="true"]{
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 /* ============ BREAKPOINTS (INI YANG BIKIN RAPI) ============ */

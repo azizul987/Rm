@@ -16,8 +16,14 @@ function admin_nav_item(string $href, string $label, string $key, string $active
   <nav class="admin-nav">
     <?= admin_nav_item('index.php', 'Dashboard', 'dashboard', $active) ?>
     <?= admin_nav_item('properties.php', 'Kelola Properti', 'properties', $active) ?>
-    <?= admin_nav_item('sales.php', 'Kelola Sales', 'sales', $active) ?>
-    <?= admin_nav_item('settings.php', 'Pengaturan Website', 'settings', $active) ?>
+    <?php if (is_superadmin() || is_admin()): ?>
+      <?= admin_nav_item('sales.php', 'Kelola Sales', 'sales', $active) ?>
+      <?= admin_nav_item('settings.php', 'Pengaturan Brand', 'settings_brand', $active) ?>
+      <?= admin_nav_item('settings_home.php', 'Pengaturan Home', 'settings_home', $active) ?>
+      <?= admin_nav_item('settings_about.php', 'Pengaturan About', 'settings_about', $active) ?>
+      <?= admin_nav_item('settings_contact.php', 'Pengaturan Contact', 'settings_contact', $active) ?>
+      <?= admin_nav_item('users.php', 'Manajemen Admin', 'users', $active) ?>
+    <?php endif; ?>
   </nav>
 
   <div class="admin-sidebar-foot">

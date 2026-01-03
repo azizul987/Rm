@@ -1,0 +1,4 @@
+RewriteEngine On
+
+  RewriteRule ^property/([0-9]+)/?([A-Za-z0-9-]+)?/?$ property.php?id=$1&slug=$2 [L,QSA]
+  RewriteRule ^sitemap\.xml$ sitemap.php [L]

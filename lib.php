@@ -11,6 +11,65 @@ function get_str(string $k, string $d=''): string {
   return ($v === null) ? $d : trim((string)$v);
 }
 
+function base_url(): string {
+  $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);
+  $scheme = $https ? 'https' : 'http';
+  $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+  return $scheme . '://' . $host;
+}
+
+function base_path(): string {
+  $docRoot = $_SERVER['DOCUMENT_ROOT'] ?? '';
+  $baseDir = __DIR__;
+
+  $docRoot = str_replace('\\', '/', realpath($docRoot) ?: $docRoot);
+  $baseDir = str_replace('\\', '/', realpath($baseDir) ?: $baseDir);
+
+  if ($docRoot !== '' && $baseDir !== '' && str_starts_with($baseDir, $docRoot)) {
+    $rel = substr($baseDir, strlen($docRoot));
+    $rel = str_replace('\\', '/', $rel);
+    $rel = rtrim($rel, '/');
+    return ($rel === '') ? '' : $rel;
+  }
+
+  $script = $_SERVER['SCRIPT_NAME'] ?? '';
+  $dir = str_replace('\\', '/', dirname($script));
+  $dir = rtrim($dir, '/');
+  if ($dir === '' || $dir === '.' || $dir === '/') return '';
+  return $dir;
+}
+
+function site_url(string $path): string {
+  $path = '/' . ltrim($path, '/');
+  $base = rtrim(base_url(), '/');
+  $dir = base_path();
+  return $base . ($dir ? $dir : '') . $path;
+}
+
+function current_url(): string {
+  $uri = $_SERVER['REQUEST_URI'] ?? '/';
+  return rtrim(base_url(), '/') . $uri;
+}
+
+function abs_url(string $path): string {
+  if (preg_match('~^https?://~i', $path)) return $path;
+  return site_url($path);
+}
+
+function slugify(string $text): string {
+  $text = strtolower($text);
+  $text = preg_replace('/[^a-z0-9]+/', '-', $text);
+  $text = trim($text, '-');
+  return $text !== '' ? $text : 'properti';
+}
+
+function str_excerpt(string $text, int $max = 160): string {
+  $clean = trim(preg_replace('/\s+/', ' ', strip_tags($text)));
+  if (strlen($clean) <= $max) return $clean;
+  return rtrim(substr($clean, 0, $max - 3)) . '...';
+}
+
 function csrf_token(): string {
   if (session_status() !== PHP_SESSION_ACTIVE) session_start();
   if (empty($_SESSION['_csrf'])) $_SESSION['_csrf'] = bin2hex(random_bytes(16));
@@ -60,6 +119,45 @@ function features_from_json(?string $json): string {
   return implode("\n", array_map('strval', $arr));
 }
 
+function youtube_id(string $url): ?string {
+  $url = trim($url);
+  if ($url === '') return null;
+
+  $id = null;
+  if (preg_match('~youtu\.be/([A-Za-z0-9_-]{11})~', $url, $m)) $id = $m[1];
+  if (!$id && preg_match('~v=([A-Za-z0-9_-]{11})~', $url, $m)) $id = $m[1];
+  if (!$id && preg_match('~youtube\.com/embed/([A-Za-z0-9_-]{11})~', $url, $m)) $id = $m[1];
+  if (!$id && preg_match('~youtube\.com/shorts/([A-Za-z0-9_-]{11})~', $url, $m)) $id = $m[1];
+
+  return $id ?: null;
+}
+
+function videos_to_json(string $text): ?string {
+  $lines = array_filter(array_map('trim', preg_split('/\R/', $text)));
+  if (!$lines) return null;
+
+  $ids = [];
+  foreach ($lines as $line) {
+    $id = youtube_id($line);
+    if ($id) $ids[] = $id;
+  }
+  $ids = array_values(array_unique($ids));
+  if (!$ids) return null;
+  return json_encode($ids, JSON_UNESCAPED_UNICODE);
+}
+
+function videos_from_json(?string $json): string {
+  if (!$json) return '';
+  $arr = json_decode($json, true);
+  if (!is_array($arr)) return '';
+  $urls = [];
+  foreach ($arr as $id) {
+    $id = (string)$id;
+    if ($id !== '') $urls[] = 'https://youtu.be/' . $id;
+  }
+  return implode("\n", $urls);
+}
+
 function setting(string $key, ?string $default = null): ?string {
   static $cache = null;
 
@@ -95,4 +193,3 @@ function get_int_param(string $k, int $d = 0): int {
 function get_str_param(string $k, string $d = ''): string {
   return function_exists('get_str') ? get_str($k, $d) : $d;
 }
-

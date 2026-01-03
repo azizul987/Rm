@@ -8,17 +8,48 @@ include __DIR__ . '/_header.php';
 
 $pdo = db();
 
-$props  = (int)$pdo->query("SELECT COUNT(*) c FROM properties")->fetch()['c'];
-$sales  = (int)$pdo->query("SELECT COUNT(*) c FROM sales")->fetch()['c'];
-$activeProps = (int)$pdo->query("SELECT COUNT(*) c FROM properties WHERE status='active'")->fetch()['c'];
+if (is_editor()) {
+  $editorId = admin_user_id();
+  $st = $pdo->prepare("SELECT p.status, COUNT(*) c
+                       FROM properties p
+                       LEFT JOIN editor_properties ep
+                         ON ep.property_id=p.id AND ep.editor_id=?
+                       WHERE (p.created_by=? OR ep.property_id IS NOT NULL)
+                       GROUP BY p.status");
+  $st->execute([$editorId, $editorId]);
+  $rowsKpi = $st->fetchAll();
+  $props = 0;
+  $activeProps = 0;
+  foreach ($rowsKpi as $r) {
+    $props += (int)$r['c'];
+    if (($r['status'] ?? '') === 'active') $activeProps = (int)$r['c'];
+  }
+  $sales = 0;
 
-$recent = $pdo->query("
-  SELECT p.id, p.title, p.status, p.updated_at, s.name AS sales_name
-  FROM properties p
-  LEFT JOIN sales s ON s.id=p.sales_id
-  ORDER BY p.updated_at DESC
-  LIMIT 6
-")->fetchAll();
+  $st = $pdo->prepare("
+    SELECT p.id, p.title, p.status, p.updated_at, s.name AS sales_name
+    FROM properties p
+    LEFT JOIN editor_properties ep ON ep.property_id=p.id AND ep.editor_id=?
+    LEFT JOIN sales s ON s.id=p.sales_id
+    WHERE (p.created_by=? OR ep.property_id IS NOT NULL)
+    ORDER BY p.updated_at DESC
+    LIMIT 6
+  ");
+  $st->execute([$editorId, $editorId]);
+  $recent = $st->fetchAll();
+} else {
+  $props  = (int)$pdo->query("SELECT COUNT(*) c FROM properties")->fetch()['c'];
+  $sales  = (int)$pdo->query("SELECT COUNT(*) c FROM sales")->fetch()['c'];
+  $activeProps = (int)$pdo->query("SELECT COUNT(*) c FROM properties WHERE status='active'")->fetch()['c'];
+
+  $recent = $pdo->query("
+    SELECT p.id, p.title, p.status, p.updated_at, s.name AS sales_name
+    FROM properties p
+    LEFT JOIN sales s ON s.id=p.sales_id
+    ORDER BY p.updated_at DESC
+    LIMIT 6
+  ")->fetchAll();
+}
 
 function fmt_dt($value){
   if (!$value) return '-';
@@ -55,7 +86,9 @@ function status_badge($status){
 
       <div class="admin-quick">
         <a class="action accent" href="property_edit.php">+ Tambah Properti</a>
-        <a class="action" href="sales_edit.php">+ Tambah Sales</a>
+        <?php if (!is_editor()): ?>
+          <a class="action" href="sales_edit.php">+ Tambah Sales</a>
+        <?php endif; ?>
       </div>
     </div>
 
@@ -72,28 +105,30 @@ function status_badge($status){
         </div>
       </div>
 
-      <div class="admin-card">
-        <h3>Sales</h3>
-        <p>Atur profil sales, nomor WhatsApp, foto, dan area layanan.</p>
-        <div class="kpi kpi-blue"><?= $sales ?></div>
-        <div class="muted">Pastikan WA format <strong>62...</strong></div>
+      <?php if (!is_editor()): ?>
+        <div class="admin-card">
+          <h3>Sales</h3>
+          <p>Atur profil sales, nomor WhatsApp, foto, dan area layanan.</p>
+          <div class="kpi kpi-blue"><?= $sales ?></div>
+          <div class="muted">Pastikan WA format <strong>62...</strong></div>
 
-        <div class="actions">
-          <a class="action accent" href="sales.php">Kelola Sales</a>
-          <a class="action" href="sales_edit.php">Tambah Sales</a>
+          <div class="actions">
+            <a class="action accent" href="sales.php">Kelola Sales</a>
+            <a class="action" href="sales_edit.php">Tambah Sales</a>
+          </div>
         </div>
-      </div>
 
-      <div class="admin-card">
-        <h3>Website</h3>
-        <p>Ubah nama brand, tagline, footer, dan logo tanpa edit file.</p>
-        <div class="kpi kpi-blue">⚙</div>
-        <div class="muted">Branding & tampilan</div>
+        <div class="admin-card">
+          <h3>Website</h3>
+          <p>Ubah nama brand, tagline, footer, dan logo tanpa edit file.</p>
+          <div class="kpi kpi-blue">⚙</div>
+          <div class="muted">Branding & tampilan</div>
 
-        <div class="actions">
-          <a class="action accent" href="settings.php">Buka Pengaturan</a>
+          <div class="actions">
+            <a class="action accent" href="settings.php">Buka Pengaturan</a>
+          </div>
         </div>
-      </div>
+      <?php endif; ?>
     </div>
 
     <div class="panel admin-panel">

@@ -1,13 +1,14 @@
 <?php
 require __DIR__ . '/_guard.php';
+require_role(['superadmin', 'admin']);
 
 require_once __DIR__ . '/../db.php';
 require_once __DIR__ . '/../lib.php';
 
 $cfg = require __DIR__ . '/../config.php';
 
-$admin_title = 'Pengaturan Website';
-$active = 'settings';
+$admin_title = 'Pengaturan Brand';
+$active = 'settings_brand';
 
 $error = '';
 $success = '';
@@ -19,7 +20,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $tagline  = trim($_POST['site_tagline'] ?? '');
   $footer   = trim($_POST['footer_text'] ?? '');
   $removeLogo = (string)($_POST['remove_logo'] ?? '') === '1';
-
   if ($siteName === '') {
     $error = 'Nama website wajib diisi.';
   } else {
@@ -67,7 +67,7 @@ $curLogo = setting('logo_path', null);
 
     <div class="admin-pagehead admin-pagehead-spaced">
       <div>
-        <h1 class="admin-title">Pengaturan Website</h1>
+        <h1 class="admin-title">Pengaturan Brand</h1>
         <p class="muted">
           Ubah identitas publik website. Footer mendukung token <code>{year}</code>.
         </p>

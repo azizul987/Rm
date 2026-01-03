@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/_guard.php';
+require_role(['superadmin', 'admin']);
 
 $cfg = require __DIR__ . '/../config.php';
 $pdo = db();

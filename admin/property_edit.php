@@ -6,6 +6,8 @@ $active = 'properties';
 
 $cfg = require __DIR__ . '/../config.php';
 $pdo = db();
+$editorId = admin_user_id();
+$editorCredit = null;
 
 $id = (int)($_GET['id'] ?? 0);
 $p = null;
@@ -15,14 +17,55 @@ if ($id) {
   $st->execute([$id]);
   $p = $st->fetch();
   if (!$p) { http_response_code(404); exit('Property not found'); }
+
+  if (is_editor()) {
+    $ownerId = (int)($p['created_by'] ?? 0);
+    if ($ownerId !== $editorId) {
+      $chk = $pdo->prepare("SELECT 1 FROM editor_properties WHERE editor_id=? AND property_id=?");
+      $chk->execute([$editorId, $id]);
+      if (!$chk->fetchColumn()) {
+        http_response_code(403);
+        exit('Akses ditolak.');
+      }
+    }
+  }
+} elseif (is_editor()) {
+  $st = $pdo->prepare("SELECT credit_limit, credit_used FROM users WHERE id=? AND role='editor' LIMIT 1");
+  $st->execute([$editorId]);
+  $editorCredit = $st->fetch();
+  if (!$editorCredit) {
+    http_response_code(403);
+    exit('Akses ditolak.');
+  }
+  if ((int)$editorCredit['credit_used'] >= (int)$editorCredit['credit_limit']) {
+    http_response_code(403);
+    exit('Kredit editor sudah habis.');
+  }
 }
 
-$sales = $pdo->query("SELECT id, name FROM sales ORDER BY name ASC")->fetchAll();
+$allowedSalesIds = [];
+if (is_editor()) {
+  $st = $pdo->prepare("SELECT s.id, s.name
+                       FROM sales s
+                       INNER JOIN editor_sales es ON es.sales_id=s.id
+                       WHERE es.editor_id=?
+                       ORDER BY s.name ASC");
+  $st->execute([$editorId]);
+  $sales = $st->fetchAll();
+  $allowedSalesIds = array_map('intval', array_column($sales, 'id'));
+} else {
+  $sales = $pdo->query("SELECT id, name FROM sales ORDER BY name ASC")->fetchAll();
+}
 
 function property_images(int $pid): array {
   $st = db()->prepare("SELECT * FROM property_images WHERE property_id=? ORDER BY sort_order ASC, id ASC");
   $st->execute([$pid]);
   return $st->fetchAll();
+}
+
+function admin_public_path(string $path): string {
+  if (preg_match('~^https?://~i', $path) || str_starts_with($path, '/')) return $path;
+  return '../' . ltrim($path, '/');
 }
 
 function fmt_dt($value){
@@ -46,23 +89,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $building = (int)($_POST['building'] ?? 0);
   $desc = trim($_POST['description'] ?? '');
   $featuresJson = features_to_json($_POST['features'] ?? '');
+  $videosJson = videos_to_json($_POST['videos'] ?? '');
   $status = trim($_POST['status'] ?? 'active');
   $salesId = ($_POST['sales_id'] ?? '') !== '' ? (int)$_POST['sales_id'] : null;
 
   if ($title === '' || $type === '' || $location === '') {
     $error = 'Judul, tipe, dan lokasi wajib diisi.';
+  } elseif (is_editor() && $salesId !== null && !in_array($salesId, $allowedSalesIds, true)) {
+    $error = 'Sales tidak diizinkan untuk editor ini.';
   } else {
     if ($id) {
-      $st = $pdo->prepare("UPDATE properties SET title=?, type=?, price=?, location=?, beds=?, baths=?, land=?, building=?, description=?, features_json=?, status=?, sales_id=? WHERE id=?");
-      $st->execute([$title,$type,$price,$location,$beds,$baths,$land,$building,$desc,$featuresJson,$status,$salesId,$id]);
+      $st = $pdo->prepare("UPDATE properties SET title=?, type=?, price=?, location=?, beds=?, baths=?, land=?, building=?, description=?, features_json=?, videos_json=?, status=?, sales_id=? WHERE id=?");
+      $st->execute([$title,$type,$price,$location,$beds,$baths,$land,$building,$desc,$featuresJson,$videosJson,$status,$salesId,$id]);
     } else {
-      $st = $pdo->prepare("INSERT INTO properties (title,type,price,location,beds,baths,land,building,description,features_json,status,sales_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
-      $st->execute([$title,$type,$price,$location,$beds,$baths,$land,$building,$desc,$featuresJson,$status,$salesId]);
-      $id = (int)$pdo->lastInsertId();
+      if (is_editor()) {
+        if ($editorCredit === null) {
+          $st = $pdo->prepare("SELECT credit_limit, credit_used FROM users WHERE id=? AND role='editor' LIMIT 1");
+          $st->execute([$editorId]);
+          $editorCredit = $st->fetch();
+        }
+        if (!$editorCredit || (int)$editorCredit['credit_used'] >= (int)$editorCredit['credit_limit']) {
+          $error = 'Kredit editor sudah habis.';
+        }
+      }
+
+      if (!$error) {
+        if (is_editor()) {
+          $st = $pdo->prepare("INSERT INTO properties (title,type,price,location,beds,baths,land,building,description,features_json,videos_json,status,sales_id,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+          $st->execute([$title,$type,$price,$location,$beds,$baths,$land,$building,$desc,$featuresJson,$videosJson,$status,$salesId,$editorId]);
+          $pdo->prepare("UPDATE users SET credit_used = credit_used + 1 WHERE id=?")->execute([$editorId]);
+        } else {
+          $st = $pdo->prepare("INSERT INTO properties (title,type,price,location,beds,baths,land,building,description,features_json,videos_json,status,sales_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
+          $st->execute([$title,$type,$price,$location,$beds,$baths,$land,$building,$desc,$featuresJson,$videosJson,$status,$salesId]);
+        }
+        $id = (int)$pdo->lastInsertId();
+      }
     }
 
     // Upload COVER (sort_order=1)
-    if (!empty($_FILES['cover']['name'])) {
+    if (!$error && !empty($_FILES['cover']['name'])) {
       [$ok, $msg, $fname] = upload_image($_FILES['cover'], $cfg['upload']['property_dir'], $cfg['upload']['max_bytes']);
       if (!$ok) {
         $error = $msg;
@@ -106,6 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $val = fn($k, $d='') => e((string)($p[$k] ?? $d));
 $featuresText = features_from_json($p['features_json'] ?? null);
+$videosText = videos_from_json($p['videos_json'] ?? null);
 $imgs = $id ? property_images($id) : [];
 
 include __DIR__ . '/_header.php';
@@ -235,6 +301,19 @@ include __DIR__ . '/_header.php';
             </div>
           </div>
 
+          <div class="admin-grid admin-grid-2" style="margin-top:12px">
+            <div class="field">
+              <label class="label" for="videos">Video YouTube (opsional)</label>
+              <div class="admin-video-inputs">
+                <input id="video_url_input" class="input" type="url" placeholder="Tempel URL YouTube lalu klik Tambah">
+                <button class="action" type="button" id="add-video-btn">Tambah</button>
+              </div>
+              <textarea id="videos" class="input admin-textarea" name="videos" rows="4" placeholder="1 URL per baris, contoh: https://youtu.be/xxxxxx"><?= e($videosText) ?></textarea>
+              <div id="video-preview" class="img-grid video-preview"></div>
+              <div class="muted" style="margin-top:6px">Hanya mendukung link YouTube. Preview akan muncul otomatis.</div>
+            </div>
+          </div>
+
           <div class="actions" style="margin-top:14px">
             <button class="action accent" type="submit">Simpan</button>
             <a class="action" href="properties.php">Batal</a>
@@ -290,8 +369,9 @@ include __DIR__ . '/_header.php';
               <div class="img-grid">
                 <?php foreach ($imgs as $im): ?>
                   <div class="img-item">
-                    <a class="img-thumb" href="<?= e($im['path']) ?>" target="_blank" rel="noopener" title="Buka gambar">
-                      <img src="<?= e($im['path']) ?>" alt="Foto properti">
+                    <?php $imgPath = admin_public_path((string)$im['path']); ?>
+                    <a class="img-thumb" href="<?= e($imgPath) ?>" target="_blank" rel="noopener" title="Buka gambar">
+                      <img src="<?= e($imgPath) ?>" alt="Foto properti">
                       <?php if ((int)$im['sort_order'] === 1): ?>
                         <span class="img-badge">Cover</span>
                       <?php else: ?>
@@ -326,3 +406,81 @@ include __DIR__ . '/_header.php';
 </div>
 
 <?php include __DIR__ . '/_footer.php'; ?>
+
+<script>
+(function () {
+  const textarea = document.getElementById('videos');
+  const preview = document.getElementById('video-preview');
+  const input = document.getElementById('video_url_input');
+  const addBtn = document.getElementById('add-video-btn');
+  if (!textarea || !preview) return;
+
+  function extractId(url) {
+    const u = String(url || '').trim();
+    if (!u) return null;
+    let m = u.match(/youtu\.be\/([A-Za-z0-9_-]{11})/);
+    if (m) return m[1];
+    m = u.match(/[?&]v=([A-Za-z0-9_-]{11})/);
+    if (m) return m[1];
+    m = u.match(/youtube\.com\/embed\/([A-Za-z0-9_-]{11})/);
+    if (m) return m[1];
+    m = u.match(/youtube\.com\/shorts\/([A-Za-z0-9_-]{11})/);
+    if (m) return m[1];
+    return null;
+  }
+
+  function renderPreview() {
+    const lines = textarea.value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    const ids = [];
+    lines.forEach(line => {
+      const id = extractId(line);
+      if (id && !ids.includes(id)) ids.push(id);
+    });
+
+    preview.innerHTML = '';
+    if (!ids.length) return;
+
+    ids.forEach(id => {
+      const item = document.createElement('div');
+      item.className = 'img-item';
+
+      const link = document.createElement('a');
+      link.className = 'img-thumb video-thumb';
+      link.href = 'https://www.youtube.com/watch?v=' + id;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.title = 'Buka video';
+
+      const img = document.createElement('img');
+      img.alt = 'Preview video YouTube';
+      img.src = 'https://img.youtube.com/vi/' + id + '/hqdefault.jpg';
+
+      link.appendChild(img);
+      item.appendChild(link);
+      preview.appendChild(item);
+    });
+  }
+
+  function addUrl() {
+    const val = input ? input.value.trim() : '';
+    if (!val) return;
+    const current = textarea.value.trim();
+    textarea.value = current ? (current + "\n" + val) : val;
+    if (input) input.value = '';
+    renderPreview();
+  }
+
+  textarea.addEventListener('input', renderPreview);
+  if (addBtn) addBtn.addEventListener('click', addUrl);
+  if (input) {
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addUrl();
+      }
+    });
+  }
+
+  renderPreview();
+})();
+</script>

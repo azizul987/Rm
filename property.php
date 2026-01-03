@@ -19,9 +19,12 @@ $st = $pdo->prepare("
          s.whatsapp AS sales_whatsapp,
          s.email AS sales_email,
          s.photo_path AS sales_photo,
-         s.bio AS sales_bio
+         s.bio AS sales_bio,
+         u.role AS creator_role,
+         u.status AS creator_status
   FROM properties p
   LEFT JOIN sales s ON s.id = p.sales_id
+  LEFT JOIN users u ON u.id = p.created_by
   WHERE p.id = ?
   LIMIT 1
 ");
@@ -35,6 +38,11 @@ if (!$p) {
 
 // Public hanya tampilkan yang publish
 if (($p['status'] ?? '') !== 'active') {
+  http_response_code(404);
+  exit('Properti tidak tersedia.');
+}
+// Sembunyikan jika dibuat editor yang dibekukan
+if (($p['creator_role'] ?? '') === 'editor' && ($p['creator_status'] ?? '') === 'frozen') {
   http_response_code(404);
   exit('Properti tidak tersedia.');
 }
@@ -64,6 +72,45 @@ if (!empty($p['features_json'])) {
   if (is_array($tmp)) $features = $tmp;
 }
 
+$videos = [];
+if (!empty($p['videos_json'])) {
+  $tmp = json_decode($p['videos_json'], true);
+  if (is_array($tmp)) $videos = $tmp;
+}
+
+$videoItems = [];
+foreach ($videos as $v) {
+  $raw = trim((string)$v);
+  if ($raw === '') continue;
+  $id = youtube_id($raw);
+  if (!$id && preg_match('/^[A-Za-z0-9_-]{11}$/', $raw)) $id = $raw;
+  if (!$id) continue;
+
+  $videoItems[] = [
+    'type' => 'video',
+    'id' => $id,
+    'thumb' => 'https://img.youtube.com/vi/' . $id . '/hqdefault.jpg',
+    'embed' => 'https://www.youtube.com/embed/' . $id,
+  ];
+}
+
+$mediaItems = [];
+foreach ($images as $src) {
+  $mediaItems[] = [
+    'type' => 'image',
+    'src' => $src,
+  ];
+}
+foreach ($videoItems as $v) {
+  $mediaItems[] = $v;
+}
+$mediaCount = count($mediaItems);
+$firstMedia = $mediaItems[0] ?? null;
+$initialImg = $firstImg;
+if (!$initialImg && $firstMedia && $firstMedia['type'] === 'video') {
+  $initialImg = $firstMedia['thumb'];
+}
+
 // helper WA (lebih “pasti”)
 function wa_link(?string $wa, ?string $text = null): ?string {
   if (!$wa) return null;
@@ -83,6 +130,19 @@ function wa_link(?string $wa, ?string $text = null): ?string {
 }
 
 $page_title = $p['title'] ?? 'Detail Properti';
+$descSource = (string)($p['description'] ?? '');
+if ($descSource === '' && !empty($features)) {
+  $descSource = implode(', ', array_map('strval', $features));
+}
+if ($descSource === '') {
+  $descSource = ($p['title'] ?? 'Properti') . ' di ' . ($p['location'] ?? '');
+}
+$page_description = str_excerpt($descSource, 155);
+$page_og_type = 'product';
+$page_canonical = 'property.php?id=' . $id;
+if (!empty($firstImg) && !str_starts_with($firstImg, 'data:')) {
+  $page_image = $firstImg;
+}
 include __DIR__ . '/header.php';
 
 // pesan WA default
@@ -106,9 +166,14 @@ $waText = "Halo, saya tertarik dengan properti: " . ($p['title'] ?? '') . " (" .
     </div>
 
     <div class="property-head-right">
-      <div class="property-price"><?= e(rupiah((int)$p['price'])) ?></div>
-      <div class="property-size muted">
-        LT <?= (int)$p['land'] ?> m² <span class="dot">•</span> LB <?= (int)$p['building'] ?> m²
+      <div class="property-price">
+        <span class="property-price-label">Harga</span>
+        <span class="property-price-value"><?= e(rupiah((int)$p['price'])) ?></span>
+      </div>
+      <div class="property-size">
+        <span class="property-size-item">LT <?= (int)$p['land'] ?> m²</span>
+        <span class="dot">•</span>
+        <span class="property-size-item">LB <?= (int)$p['building'] ?> m²</span>
       </div>
     </div>
   </div>
@@ -116,18 +181,29 @@ $waText = "Halo, saya tertarik dengan properti: " . ($p['title'] ?? '') . " (" .
   <hr class="line" />
 
   <!-- MEDIA CAROUSEL -->
-  <?php if ($firstImg): ?>
+  <?php if ($mediaCount > 0): ?>
     <div class="property-media">
 
       <div class="mc-stage" aria-label="Foto properti">
         <img
           class="mc-main"
-          src="<?= e($firstImg) ?>"
-          alt="<?= e($p['title'] ?? 'Foto properti') ?>"
+          src="<?= e($initialImg ?: '') ?>"
+          alt="<?= e($p['title'] ?? 'Media properti') ?>"
           loading="eager"
         />
 
-        <?php if ($imgCount > 1): ?>
+        <div class="mc-video" hidden>
+          <iframe
+            class="mc-video-frame"
+            src=""
+            title="Video properti"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+          ></iframe>
+        </div>
+
+        <?php if ($mediaCount > 1): ?>
           <button class="mc-arrow prev" type="button" aria-label="Foto sebelumnya">‹</button>
           <button class="mc-arrow next" type="button" aria-label="Foto berikutnya">›</button>
         <?php endif; ?>
@@ -135,21 +211,30 @@ $waText = "Halo, saya tertarik dengan properti: " . ($p['title'] ?? '') . " (" .
         <button class="mc-full" type="button" aria-label="Lihat foto ukuran penuh">Lihat penuh</button>
 
         <div class="mc-count" aria-live="polite">
-          <span class="mc-current">1</span> / <span class="mc-total"><?= (int)$imgCount ?></span>
+          <span class="mc-current">1</span> / <span class="mc-total"><?= (int)$mediaCount ?></span>
         </div>
       </div>
 
-      <?php if ($imgCount > 1): ?>
+      <?php if ($mediaCount > 1): ?>
         <div class="mc-thumbs" aria-label="Thumbnail foto">
-          <?php foreach ($images as $i => $src): ?>
+          <?php foreach ($mediaItems as $i => $item): ?>
             <button
               type="button"
-              class="mc-thumb <?= $i === 0 ? 'is-active' : '' ?>"
+              class="mc-thumb <?= $i === 0 ? 'is-active' : '' ?> <?= ($item['type'] ?? '') === 'video' ? 'is-video' : '' ?>"
               data-index="<?= (int)$i ?>"
-              data-src="<?= e($src) ?>"
-              aria-label="Lihat foto <?= (int)($i + 1) ?>"
+              data-type="<?= e($item['type']) ?>"
+              <?php if (($item['type'] ?? '') === 'video'): ?>
+                data-video="<?= e($item['id']) ?>"
+              <?php else: ?>
+                data-src="<?= e($item['src']) ?>"
+              <?php endif; ?>
+              aria-label="<?= ($item['type'] ?? '') === 'video' ? 'Lihat video' : 'Lihat foto ' . (int)($i + 1) ?>"
             >
-              <img src="<?= e($src) ?>" alt="Thumbnail <?= (int)($i + 1) ?>" loading="lazy" />
+              <img
+                src="<?= e(($item['type'] ?? '') === 'video' ? $item['thumb'] : $item['src']) ?>"
+                alt="<?= ($item['type'] ?? '') === 'video' ? 'Thumbnail video' : 'Thumbnail ' . (int)($i + 1) ?>"
+                loading="lazy"
+              />
             </button>
           <?php endforeach; ?>
         </div>
@@ -254,6 +339,35 @@ $waText = "Halo, saya tertarik dengan properti: " . ($p['title'] ?? '') . " (" .
 
 </section>
 
+<?php
+$imageUrls = [];
+foreach ($images as $src) {
+  if (!str_starts_with($src, 'data:')) $imageUrls[] = abs_url($src);
+}
+$schemaImage = $imageUrls ?: [abs_url($page_image ?? 'Assets/logo.png')];
+$schema = [
+  '@context' => 'https://schema.org',
+  '@type' => 'RealEstateListing',
+  'name' => $p['title'] ?? 'Properti',
+  'description' => $page_description,
+  'url' => $page_canonical,
+  'image' => $schemaImage,
+  'address' => [
+    '@type' => 'PostalAddress',
+    'addressLocality' => $p['location'] ?? '',
+  ],
+  'offers' => [
+    '@type' => 'Offer',
+    'priceCurrency' => 'IDR',
+    'price' => (int)($p['price'] ?? 0),
+    'availability' => 'https://schema.org/InStock',
+  ],
+];
+?>
+<script type="application/ld+json">
+<?= json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>
+</script>
+
 <script>
 (function(){
   const stage = document.querySelector('.mc-stage');
@@ -264,6 +378,8 @@ $waText = "Halo, saya tertarik dengan properti: " . ($p['title'] ?? '') . " (" .
   const prevBtn = stage.querySelector('.mc-arrow.prev');
   const nextBtn = stage.querySelector('.mc-arrow.next');
   const fullBtn = stage.querySelector('.mc-full');
+  const videoWrap = stage.querySelector('.mc-video');
+  const videoFrame = stage.querySelector('.mc-video-frame');
 
   const currentEl = stage.querySelector('.mc-current');
   const totalEl = stage.querySelector('.mc-total');
@@ -275,38 +391,68 @@ $waText = "Halo, saya tertarik dengan properti: " . ($p['title'] ?? '') . " (" .
   const lbPrev = lb ? lb.querySelector('.lb-nav.prev') : null;
   const lbNext = lb ? lb.querySelector('.lb-nav.next') : null;
 
-  const sources = thumbs.length
-    ? thumbs.map(t => t.dataset.src)
-    : (mainImg?.src ? [mainImg.src] : []);
+  const items = thumbs.length
+    ? thumbs.map(t => ({
+        type: t.dataset.type || 'image',
+        src: t.dataset.src || '',
+        video: t.dataset.video || '',
+      }))
+    : (mainImg?.src ? [{ type: 'image', src: mainImg.src }] : []);
 
   let index = 0;
+  let currentType = 'image';
 
   function setActive(i){
-    if (!sources.length || !mainImg) return;
+    if (!items.length || !mainImg) return;
 
-    index = (i + sources.length) % sources.length;
-    const src = sources[index];
+    index = (i + items.length) % items.length;
+    const item = items[index];
+    currentType = item.type || 'image';
 
-    mainImg.src = src;
+    if (currentType === 'video') {
+      mainImg.style.display = 'none';
+      if (videoWrap) videoWrap.hidden = false;
+      if (videoFrame) {
+        const id = item.video || '';
+        videoFrame.src = id ? ('https://www.youtube.com/embed/' + id + '?rel=0') : '';
+      }
+      if (lb && !lb.hidden) closeLightbox();
+      if (fullBtn) {
+        fullBtn.setAttribute('aria-disabled', 'true');
+        fullBtn.style.pointerEvents = 'none';
+        fullBtn.style.opacity = '0.5';
+      }
+    } else {
+      if (videoFrame) videoFrame.src = '';
+      if (videoWrap) videoWrap.hidden = true;
+      mainImg.style.display = '';
+      mainImg.src = item.src || '';
+      if (fullBtn) {
+        fullBtn.removeAttribute('aria-disabled');
+        fullBtn.style.pointerEvents = '';
+        fullBtn.style.opacity = '';
+      }
+    }
 
     // update counter
     if (currentEl) currentEl.textContent = String(index + 1);
-    if (totalEl) totalEl.textContent = String(sources.length);
+    if (totalEl) totalEl.textContent = String(items.length);
 
     // active thumb
     thumbs.forEach((t, n) => t.classList.toggle('is-active', n === index));
 
     // update lightbox if open
-    if (lb && !lb.hidden && lbImg){
-      lbImg.src = src;
-      if (lbOpen) lbOpen.href = src;
+    if (lb && !lb.hidden && lbImg && currentType === 'image'){
+      lbImg.src = item.src || '';
+      if (lbOpen) lbOpen.href = item.src || '';
     }
   }
 
   function openLightbox(){
     if (!lb || !lbImg) return;
+    if (currentType !== 'image') return;
     lb.hidden = false;
-    lbImg.src = sources[index] || (mainImg ? mainImg.src : '');
+    lbImg.src = items[index]?.src || (mainImg ? mainImg.src : '');
     if (lbOpen) lbOpen.href = lbImg.src;
     document.body.style.overflow = 'hidden';
   }

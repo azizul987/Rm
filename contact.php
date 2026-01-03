@@ -1,14 +1,22 @@
 <?php
-$page_title = 'Contact';
-include __DIR__ . '/header.php';
+require __DIR__ . '/db.php';
+require __DIR__ . '/lib.php';
 
+$page_title = 'Contact';
 $siteName = setting('site_name', 'RM Properti') ?? 'RM Properti';
 
-// Bisa kamu pindah ke settings nanti
-$email   = 'info@rmproperti.id';
-$phone   = '08xxxxxxxxxx'; // format Indonesia umum
-$address = 'Alamat kantor / area layanan (isi sendiri)';
-$hours   = "Senin–Sabtu: 09.00–17.00\nMinggu: By appointment";
+$email   = setting('contact_email', 'info@rmproperti.id') ?? 'info@rmproperti.id';
+$phone   = setting('contact_phone', '08xxxxxxxxxx') ?? '08xxxxxxxxxx'; // format Indonesia umum
+$address = setting('contact_address', 'Alamat kantor / area layanan (isi sendiri)') ?? 'Alamat kantor / area layanan (isi sendiri)';
+$hours   = setting('contact_hours', "Senin–Sabtu: 09.00–17.00\nMinggu: By appointment") ?? "Senin–Sabtu: 09.00–17.00\nMinggu: By appointment";
+$subtitle = setting(
+  'contact_subtitle',
+  'Untuk kerja sama atau pertanyaan umum, gunakan kanal di bawah. Untuk listing tertentu, buka detail properti lalu klik WhatsApp sales.'
+) ?? 'Untuk kerja sama atau pertanyaan umum, gunakan kanal di bawah. Untuk listing tertentu, buka detail properti lalu klik WhatsApp sales.';
+$tip = setting(
+  'contact_tip',
+  'Tip: untuk konsultasi listing tertentu, buka detail properti lalu klik tombol WhatsApp sales.'
+) ?? 'Tip: untuk konsultasi listing tertentu, buka detail properti lalu klik tombol WhatsApp sales.';
 
 /**
  * Convert nomor lokal Indonesia ke format WhatsApp (E.164) tanpa +.
@@ -29,6 +37,12 @@ function wa_phone($phone){
 $waNumber = wa_phone($phone);
 $waText   = "Halo {$siteName}, saya ingin bertanya / konsultasi properti.";
 $waLink   = "https://wa.me/{$waNumber}?text=" . rawurlencode($waText);
+
+$page_description = str_excerpt($subtitle, 155);
+$page_og_type = 'website';
+$page_canonical = base_url() . '/contact.php';
+
+include __DIR__ . '/header.php';
 ?>
 
 <section class="contact-hero">
@@ -36,8 +50,7 @@ $waLink   = "https://wa.me/{$waNumber}?text=" . rawurlencode($waText);
     <span class="badge-brand">Kontak</span>
     <h1 class="contact-title">Hubungi <?= e($siteName) ?></h1>
     <p class="contact-subtitle">
-      Untuk kerja sama atau pertanyaan umum, gunakan kanal di bawah. Untuk listing tertentu,
-      buka detail properti lalu klik WhatsApp sales.
+      <?= e($subtitle) ?>
     </p>
   </div>
 </section>
@@ -65,7 +78,7 @@ $waLink   = "https://wa.me/{$waNumber}?text=" . rawurlencode($waText);
         </div>
 
         <p class="contact-tip">
-          Tip: untuk konsultasi listing tertentu, buka detail properti lalu klik tombol WhatsApp sales.
+          <?= e($tip) ?>
         </p>
       </article>
 
@@ -90,5 +103,27 @@ $waLink   = "https://wa.me/{$waNumber}?text=" . rawurlencode($waText);
     </div>
   </section>
 </div>
+
+<script type="application/ld+json">
+<?= json_encode([
+  '@context' => 'https://schema.org',
+  '@type' => 'Organization',
+  'name' => $siteName,
+  'url' => base_url() . '/index.php',
+  'logo' => abs_url(setting('logo_path', 'Assets/logo.png') ?? 'Assets/logo.png'),
+  'contactPoint' => [
+    '@type' => 'ContactPoint',
+    'telephone' => $phone,
+    'email' => $email,
+    'contactType' => 'customer service',
+    'areaServed' => 'ID',
+    'availableLanguage' => ['id'],
+  ],
+  'address' => [
+    '@type' => 'PostalAddress',
+    'streetAddress' => $address,
+  ],
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>
+</script>
 
 <?php include __DIR__ . '/footer.php'; ?>
