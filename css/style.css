@@ -1,8 +1,5 @@
 /* =========================================
    style.css (PUBLIC) — CLEAN & CONSISTENT
-   - Palet warna dari logo
-   - Navbar + Hero + Card listing + About/Contact + Footer
-   - Property detail (property.php) SELARAS, tanpa konflik
 ========================================= */
 
 /* ========== TOKENS ========== */
@@ -22,10 +19,14 @@
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   --radius: 12px;
 }
+@media (max-width: 768px){
+  body { outline: 6px solid red !important; }
+}
 
 /* ========== RESET ========== */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { height: 100%; }
+html, body { overflow-x: hidden; }
 
 body {
   margin: 0;
@@ -64,6 +65,10 @@ main.main {
   padding: 16px;
 }
 
+.panel-lg{
+  padding: 18px;
+}
+
 .line{
   border: 0;
   border-top: 1px solid var(--border);
@@ -79,7 +84,7 @@ main.main {
 }
 .list li{ margin: 6px 0; }
 
-/* Badge kecil (opsional) */
+/* Badge kecil */
 .badge-brand {
   display: inline-block;
   background: #E0F2FE;
@@ -123,7 +128,18 @@ main.main {
 }
 .btn-accent:hover { background: #0081bf; }
 
-/* Button style untuk <a> (dipakai public & admin) */
+.btn-ghost{
+  background: #fff;
+  color: var(--text-main);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover{
+  box-shadow: var(--shadow);
+  border-color: rgba(0,0,0,0.10);
+  transform: translateY(-1px);
+}
+
+/* Button style untuk <a> (public & admin) */
 .actions{
   margin-top: 12px;
   display: flex;
@@ -358,28 +374,70 @@ main.main {
   .nav a, .action { transition:none; }
 }
 
-/* ========== HERO (HOME) ========== */
-.hero {
+/* ========== HERO (HOME) — NON FULL + ANIMATED ========== */
+.hero{
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+
+  position: relative;
+  overflow: hidden;
+
   background: linear-gradient(180deg, #FFFFFF 0%, #F0F9FF 100%);
   border-bottom: 1px solid var(--border);
-  padding: 60px 20px;
-  margin-bottom: 40px;
   text-align: center;
 
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  min-height: clamp(360px, 55vh, 560px);
+  justify-content: flex-start;
+
+  padding: clamp(34px, 6vh, 72px) 20px 34px;
+  margin-bottom: 22px;
+}
+
+/* Dekorasi: blob */
+.hero::before{
+  content:"";
+  position: absolute;
+  inset: -120px -120px auto -120px;
+  height: 520px;
+  background:
+    radial-gradient(closest-side at 28% 45%, rgba(0,154,222,.18), transparent 65%),
+    radial-gradient(closest-side at 70% 30%, rgba(247,148,29,.14), transparent 70%),
+    radial-gradient(closest-side at 60% 78%, rgba(215,25,32,.10), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  animation: heroFloat 12s ease-in-out infinite;
+}
+
+/* Dekorasi: titik */
+.hero::after{
+  content:"";
+  position:absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 1px 1px, rgba(0,154,222,.10) 1px, transparent 1px);
+  background-size: 18px 18px;
+  opacity: .32;
+  pointer-events:none;
+  z-index: 0;
+  animation: heroDrift 18s linear infinite;
 }
 
 .hero-inner{
+  position: relative;
+  z-index: 1;
   display:flex;
   flex-direction:column;
   align-items:center;
+  width: 100%;
 }
 
 .hero-text {
-  max-width: 700px;
-  margin-bottom: 30px;
+  max-width: 720px;
+  margin-bottom: 22px;
 }
 
 .hero h1 {
@@ -397,14 +455,14 @@ main.main {
   color: var(--text-muted);
   margin: 0 auto;
   font-size: 16px;
-  max-width: 520px;
+  max-width: 560px;
   line-height: 1.6;
 }
 
 /* Filter box */
 .filters {
   display: inline-flex;
-  background: #fff;
+  background: rgba(255,255,255,0.95);
   border: 1px solid var(--border);
   padding: 12px;
   border-radius: 12px;
@@ -414,6 +472,7 @@ main.main {
   box-shadow: 0 10px 25px -5px rgba(0, 154, 222, 0.15);
   width: 100%;
   max-width: 900px;
+  backdrop-filter: blur(6px);
 }
 
 .results-count{
@@ -422,10 +481,39 @@ main.main {
   font-weight: 600;
 }
 
+@keyframes heroFloat{
+  0%   { transform: translate3d(0,0,0) scale(1); }
+  50%  { transform: translate3d(12px,10px,0) scale(1.03); }
+  100% { transform: translate3d(0,0,0) scale(1); }
+}
+@keyframes heroDrift{
+  0%   { background-position: 0 0; }
+  100% { background-position: 220px 180px; }
+}
+@media (prefers-reduced-motion: reduce){
+  .hero::before, .hero::after{ animation: none; }
+}
+
+/* Mobile spacing */
 @media (max-width: 768px) {
+  .hero{
+    min-height: auto;
+    padding: 26px 16px 20px;
+    margin-bottom: 16px;
+  }
+
   .hero h1 { font-size: 28px; }
+  .hero-text{ margin-bottom: 16px; }
+
   .filters { flex-direction: column; width: 100%; }
   .input, .select, .btn { width: 100%; }
+
+  .results-count{ margin: 10px 0 14px; }
+
+  .hero::after{
+    background-size: 16px 16px;
+    opacity: .26;
+  }
 }
 
 /* ========== GRID & CARD LISTING ========== */
@@ -605,6 +693,10 @@ main.main {
   align-items:start;
 }
 
+.contact-box{
+  border-radius: 14px;
+}
+
 .contact-info{
   margin-top: 10px;
   display:flex;
@@ -637,15 +729,24 @@ main.main {
   text-align:right;
 }
 
-.btn-ghost{
-  background: #fff;
-  color: var(--text-main);
-  border: 1px solid var(--border);
+.contact-actions{
+  margin-top: 12px;
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
-.btn-ghost:hover{
-  box-shadow: var(--shadow);
-  border-color: rgba(0,0,0,0.10);
-  transform: translateY(-1px);
+
+.contact-hours{
+  color: var(--text-muted);
+  line-height: 1.7;
+  font-size: 14px;
+}
+
+.contact-tip{
+  margin: 12px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 @media (max-width: 900px){
@@ -653,7 +754,31 @@ main.main {
   .contact-title{ font-size: 28px; }
 }
 
-/* ========== FOOTER ========== */
+@media (max-width: 768px){
+  .panel.panel-lg{ padding: 14px; }
+
+  .contact-info > div{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .contact-info .value{
+    text-align: left;
+    word-break: break-word;
+  }
+
+  .contact-actions{
+    flex-direction: column;
+  }
+
+  .contact-actions .btn{
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* ========== FOOTER (FINAL) ========== */
 .site-footer{
   margin-top: auto;
   border-top: 1px solid var(--border);
@@ -668,12 +793,13 @@ main.main {
   background: var(--brand-blue);
 }
 
-.footer-inner{
+.site-footer .container.footer-inner{
   padding: 22px 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
 }
 
 .footer-title{
@@ -689,25 +815,31 @@ main.main {
   color: var(--text-muted);
   font-size: 13px;
   line-height: 1.6;
+  max-width: 56ch;
 }
 
 .footer-copy{
   color: var(--text-muted);
   font-size: 13px;
   font-weight: 700;
+  text-align: right;
 }
 
+/* Mobile footer stack */
 @media (max-width: 768px){
-  .footer-inner{
-    flex-direction: column;
-    align-items: flex-start;
+  .site-footer .container.footer-inner{
+    padding: 18px 0 !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+
+  .footer-copy{
+    text-align: left !important;
   }
 }
 
 /* =========================================
-   PROPERTY DETAIL (property.php) — SELARAS
-   - Tidak terlalu “kiri-kanan”
-   - Tidak flat, tapi juga tidak SaaS template
+   PROPERTY DETAIL (property.php)
 ========================================= */
 
 .panel.property-detail{
@@ -716,7 +848,6 @@ main.main {
   margin: 18px auto 0;
 }
 
-/* Header jadi lebih “tengah” dengan grid */
 .property-head{
   display: grid;
   grid-template-columns: 1fr auto;
@@ -746,7 +877,6 @@ main.main {
   color: var(--text-muted);
 }
 
-/* Price box agar tidak flat */
 .property-head-right{
   justify-self: end;
   text-align: right;
@@ -774,21 +904,18 @@ main.main {
   margin: 14px 0;
 }
 
-/* Cover */
 .property-cover{
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid var(--border);
   background: #EEF2F7;
 }
-
 .property-cover img{
   width: 100%;
   height: auto;
   display: block;
 }
 
-/* Gallery */
 .property-gallery{
   margin-top: 10px;
   display: grid;
@@ -816,7 +943,6 @@ main.main {
   transform: scale(1.02);
 }
 
-/* Body layout */
 .property-body{
   margin-top: 16px;
   display: grid;
@@ -841,7 +967,6 @@ main.main {
   color: var(--text-muted);
 }
 
-/* Sales card */
 .property-sales{
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -850,7 +975,6 @@ main.main {
   box-shadow: 0 10px 25px -18px rgba(0,0,0,0.22);
 }
 
-/* Sticky sales di desktop */
 @media (min-width: 981px){
   .property-aside{
     position: sticky;
@@ -899,10 +1023,8 @@ main.main {
 
 .sales-actions{ margin-top: 12px; }
 .sales-bio{ margin-top: 10px; }
-
 .property-back{ margin-top: 16px; }
 
-/* Responsive */
 @media (max-width: 980px){
   .panel.property-detail{
     max-width: 100%;
@@ -943,6 +1065,7 @@ main.main {
     grid-template-columns: 1fr;
   }
 }
+
 /* =========================================
    PROPERTY MEDIA CAROUSEL (PUBLIC)
 ========================================= */
@@ -951,7 +1074,6 @@ main.main {
   margin-top: 10px;
 }
 
-/* Stage foto utama */
 .mc-stage{
   position: relative;
   border: 1px solid var(--border);
@@ -960,7 +1082,6 @@ main.main {
   background: #EEF2F7;
   box-shadow: 0 10px 25px -18px rgba(0,0,0,.22);
 
-  /* Batas ukuran biar konsisten */
   aspect-ratio: 16 / 9;
   max-height: 540px;
 }
@@ -969,10 +1090,9 @@ main.main {
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: cover; /* gambar tetap penuh tanpa gepeng */
+  object-fit: cover;
 }
 
-/* Arrow prev/next */
 .mc-arrow{
   position: absolute;
   top: 50%;
@@ -999,7 +1119,6 @@ main.main {
 .mc-arrow.prev{ left: 12px; }
 .mc-arrow.next{ right: 12px; }
 
-/* Tombol full */
 .mc-full{
   position: absolute;
   right: 12px;
@@ -1018,7 +1137,6 @@ main.main {
   background: #fff;
 }
 
-/* Counter 1/N */
 .mc-count{
   position: absolute;
   left: 12px;
@@ -1034,7 +1152,6 @@ main.main {
   backdrop-filter: blur(6px);
 }
 
-/* Thumbnails */
 .mc-thumbs{
   margin-top: 10px;
   display: flex;
@@ -1067,7 +1184,6 @@ main.main {
   box-shadow: 0 0 0 3px rgba(0,154,222,.14);
 }
 
-/* Responsive */
 @media (max-width: 980px){
   .mc-stage{
     aspect-ratio: 4 / 3;
@@ -1126,7 +1242,7 @@ main.main {
 .lb-img{
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain; /* jangan crop, tampil penuh */
+  object-fit: contain;
   border-radius: 12px;
 }
 
@@ -1177,4 +1293,155 @@ main.main {
 }
 .lb-open:hover{
   background: rgba(255,255,255,.18);
+}
+/* ========== FOOTER (FIX RESPONSIVE) ========== */
+.site-footer{
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.02);
+  background: linear-gradient(180deg, #FFFFFF 0%, #F0F9FF 100%);
+}
+
+.site-footer::before{
+  content:"";
+  display:block;
+  height: 3px;
+  background: var(--brand-blue);
+}
+
+/* Support 2 struktur:
+   A) <div class="container footer-inner">
+   B) <div class="container"><div class="footer-inner">
+*/
+.site-footer .footer-inner{
+  padding: 22px 0;              /* padding vertikal */
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;               /* kalau sempit, boleh turun baris */
+}
+
+/* penting untuk mencegah overflow di flex item */
+.site-footer .footer-inner > *{
+  min-width: 0;
+}
+
+.footer-subtitle{
+  max-width: 56ch;
+  overflow-wrap: anywhere;        /* aman kalau ada teks panjang */
+}
+
+.footer-copy{
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* Mobile footer stack */
+@media (max-width: 768px){
+  .site-footer .footer-inner{
+    padding: 18px 0;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .footer-copy{
+    text-align: left;
+  }
+}
+/* ========== FOOTER (PERBAIKAN FINAL) ========== */
+.site-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.02);
+  background: linear-gradient(180deg, #FFFFFF 0%, #F0F9FF 100%);
+  position: relative;
+}
+
+.site-footer::before {
+  content: "";
+  display: block;
+  height: 3px;
+  background: var(--brand-blue);
+  width: 100%;
+}
+
+/* Menggunakan selector spesifik sesuai HTML kamu */
+.site-footer .container.footer-inner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  
+  /* PENTING: Jangan set padding kiri/kanan jadi 0 */
+  padding-top: 24px;
+  padding-bottom: 24px;
+  /* Padding kiri/kanan akan mengikuti class .container bawaan (20px) */
+}
+
+.footer-brand {
+  flex: 1;
+  min-width: 250px;
+}
+
+.footer-title {
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--brand-blue);
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.footer-subtitle {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  max-width: 400px; /* Supaya tidak terlalu lebar */
+}
+
+.footer-copy {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap; /* Menjaga tahun tetap satu baris di desktop */
+}
+
+/* === MOBILE RESPONSIVE === */
+@media (max-width: 768px) {
+  .site-footer .container.footer-inner {
+    flex-direction: column; /* Susun ke bawah */
+    align-items: flex-start; /* Rata kiri */
+    gap: 16px;
+    
+    /* Pastikan padding tetap ada agar tidak menempel layar */
+    padding-left: 20px !important; 
+    padding-right: 20px !important;
+    padding-top: 20px;
+    padding-bottom: 24px;
+  }
+
+  .footer-brand {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .footer-subtitle {
+    max-width: 100%; /* Full width di HP */
+  }
+
+  .footer-meta {
+    width: 100%;
+    border-top: 1px solid var(--border); /* Garis pemisah tipis di HP */
+    padding-top: 12px;
+  }
+
+  .footer-copy {
+    text-align: left; /* Rata kiri di HP */
+    white-space: normal;
+  }
 }

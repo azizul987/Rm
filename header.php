@@ -32,6 +32,10 @@ $fullTitle = ($page_title ? ($page_title . ' - ' . $siteName) : $siteName);
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title><?= e($fullTitle) ?></title>
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="Assets/logo.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
 </head>
 <body>
 
