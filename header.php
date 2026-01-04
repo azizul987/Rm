@@ -21,6 +21,22 @@ if (!isset($page_robots) || trim($page_robots) === '') {
 if (!isset($page_canonical) || trim($page_canonical) === '') {
   $page_canonical = current_url();
 }
+if (!isset($page_og_type) || trim($page_og_type) === '') {
+  $page_og_type = 'website';
+}
+if (!isset($page_image) || trim((string)$page_image) === '') {
+  $page_image = $logoUrl ?: abs_url('Assets/logo.png');
+}
+if (!is_string($page_image)) {
+  $page_image = (string)$page_image;
+}
+if ($page_image !== '' && !str_starts_with($page_image, 'data:')) {
+  $page_image = abs_url($page_image);
+}
+if ($page_image === '' || str_starts_with($page_image, 'data:')) {
+  $page_image = $logoUrl ?: abs_url('Assets/logo.png');
+}
+$page_image_alt = $page_image_alt ?? $page_title ?? $siteName;
 
 // Deteksi halaman aktif untuk nav
 $currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '';
@@ -54,6 +70,18 @@ $canonicalUrl = abs_url($page_canonical);
   <meta name="description" content="<?= e($page_description) ?>" />
   <meta name="robots" content="<?= e($page_robots) ?>" />
   <link rel="canonical" href="<?= e($canonicalUrl) ?>" />
+  <meta property="og:locale" content="id_ID" />
+  <meta property="og:type" content="<?= e($page_og_type) ?>" />
+  <meta property="og:site_name" content="<?= e($siteName) ?>" />
+  <meta property="og:title" content="<?= e($fullTitle) ?>" />
+  <meta property="og:description" content="<?= e($page_description) ?>" />
+  <meta property="og:url" content="<?= e($canonicalUrl) ?>" />
+  <meta property="og:image" content="<?= e($page_image) ?>" />
+  <meta property="og:image:alt" content="<?= e($page_image_alt) ?>" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="<?= e($fullTitle) ?>" />
+  <meta name="twitter:description" content="<?= e($page_description) ?>" />
+  <meta name="twitter:image" content="<?= e($page_image) ?>" />
   <link rel="stylesheet" href="<?= e(site_url('css/style.css')) ?>" />
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" href="<?= e(site_url('Assets/logo.png')) ?>">
