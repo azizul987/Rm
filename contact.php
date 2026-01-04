@@ -40,7 +40,7 @@ $waLink   = "https://wa.me/{$waNumber}?text=" . rawurlencode($waText);
 
 $page_description = str_excerpt($subtitle, 155);
 $page_og_type = 'website';
-$page_canonical = base_url() . '/contact.php';
+$page_canonical = site_url('contact');
 
 include __DIR__ . '/header.php';
 ?>
@@ -95,8 +95,8 @@ include __DIR__ . '/header.php';
         <div class="contact-hours"><?= nl2br(e($hours)) ?></div>
 
         <div class="contact-actions">
-          <a class="btn btn-accent" href="index.php">Lihat Listing</a>
-          <a class="btn btn-ghost" href="about.php">Tentang RM Properti</a>
+          <a class="btn btn-accent" href="<?= e(site_url('')) ?>">Lihat Listing</a>
+          <a class="btn btn-ghost" href="<?= e(site_url('about')) ?>">Tentang RM Properti</a>
         </div>
       </article>
 
@@ -109,7 +109,7 @@ include __DIR__ . '/header.php';
   '@context' => 'https://schema.org',
   '@type' => 'Organization',
   'name' => $siteName,
-  'url' => base_url() . '/index.php',
+  'url' => site_url(''),
   'logo' => abs_url(setting('logo_path', 'Assets/logo.png') ?? 'Assets/logo.png'),
   'contactPoint' => [
     '@type' => 'ContactPoint',

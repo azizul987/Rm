@@ -96,6 +96,9 @@ foreach ($videos as $v) {
 
 $mediaItems = [];
 foreach ($images as $src) {
+  if ($src && !str_starts_with($src, 'data:')) {
+    $src = abs_url($src);
+  }
   $mediaItems[] = [
     'type' => 'image',
     'src' => $src,
@@ -107,6 +110,9 @@ foreach ($videoItems as $v) {
 $mediaCount = count($mediaItems);
 $firstMedia = $mediaItems[0] ?? null;
 $initialImg = $firstImg;
+if ($initialImg && !str_starts_with($initialImg, 'data:')) {
+  $initialImg = abs_url($initialImg);
+}
 if (!$initialImg && $firstMedia && $firstMedia['type'] === 'video') {
   $initialImg = $firstMedia['thumb'];
 }
@@ -130,6 +136,7 @@ function wa_link(?string $wa, ?string $text = null): ?string {
 }
 
 $page_title = $p['title'] ?? 'Detail Properti';
+$slug = slugify((string)($p['title'] ?? 'properti'));
 $descSource = (string)($p['description'] ?? '');
 if ($descSource === '' && !empty($features)) {
   $descSource = implode(', ', array_map('strval', $features));
@@ -139,9 +146,9 @@ if ($descSource === '') {
 }
 $page_description = str_excerpt($descSource, 155);
 $page_og_type = 'product';
-$page_canonical = 'property.php?id=' . $id;
+$page_canonical = 'property/' . $id . '/' . $slug;
 if (!empty($firstImg) && !str_starts_with($firstImg, 'data:')) {
-  $page_image = $firstImg;
+  $page_image = abs_url($firstImg);
 }
 include __DIR__ . '/header.php';
 
@@ -334,7 +341,7 @@ $waText = "Halo, saya tertarik dengan properti: " . ($p['title'] ?? '') . " (" .
   </div>
 
   <div class="actions property-back">
-    <a class="action" href="index.php">← Kembali ke Listing</a>
+    <a class="action" href="<?= e(site_url('')) ?>">← Kembali ke Listing</a>
   </div>
 
 </section>

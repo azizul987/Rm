@@ -15,15 +15,7 @@ if (!isset($admin_title) || trim($admin_title) === '') $admin_title = 'Admin';
 $rawLogo = setting('admin_logo_path', null);
 if (empty($rawLogo)) $rawLogo = setting('logo_path', null);
 
-/** Fix path untuk folder /admin */
-$logoUrl = null;
-if (!empty($rawLogo)) {
-  if (preg_match('#^https?://#i', $rawLogo) || str_starts_with($rawLogo, '/')) {
-    $logoUrl = $rawLogo;
-  } else {
-    $logoUrl = '../' . ltrim($rawLogo, '/');
-  }
-}
+$logoUrl = $rawLogo ? abs_url($rawLogo) : null;
 ?>
 <!doctype html>
 <html lang="id">
@@ -33,8 +25,11 @@ if (!empty($rawLogo)) {
   <title><?= e($admin_title) ?> — Admin <?= e($siteName) ?></title>
 
   <!-- Publik dulu, lalu admin override -->
-  <link rel="stylesheet" href="../css/style.css" />
-  <link rel="stylesheet" href="../css/admin.css" />
+  <link rel="stylesheet" href="<?= e(site_url('css/style.css')) ?>" />
+  <link rel="stylesheet" href="<?= e(site_url('css/admin.css')) ?>" />
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="<?= e(site_url('Assets/logo.png')) ?>">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 </head>
 <body>
   <a class="skip-link" href="#main">Lewati ke konten</a>
@@ -42,7 +37,7 @@ if (!empty($rawLogo)) {
   <header class="site-header admin-topbar">
     <div class="container header-inner">
 
-      <a class="brand" href="index.php" aria-label="Admin <?= e($siteName) ?>">
+      <a class="brand" href="<?= e(admin_url('')) ?>" aria-label="Admin <?= e($siteName) ?>">
         <?php if (!empty($logoUrl)): ?>
           <img class="brand-logo-img" src="<?= e($logoUrl) ?>" alt="Logo <?= e($siteName) ?>" />
         <?php else: ?>
@@ -81,8 +76,8 @@ if (!empty($rawLogo)) {
 
       <!-- Menu header (desktop tampil inline; mobile jadi dropdown via body.nav-open) -->
       <nav class="nav" id="adminNav" aria-label="Menu Admin">
-        <a href="../index.php" target="_blank" rel="noopener">Lihat Website</a>
-        <a href="logout.php">Logout</a>
+        <a href="<?= e(site_url('')) ?>" target="_blank" rel="noopener">Lihat Website</a>
+        <a href="<?= e(admin_url('logout.php')) ?>">Logout</a>
       </nav>
 
     </div>

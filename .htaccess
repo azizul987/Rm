@@ -1,4 +1,15 @@
 RewriteEngine On
 
-  RewriteRule ^property/([0-9]+)/?([A-Za-z0-9-]+)?/?$ property.php?id=$1&slug=$2 [L,QSA]
-  RewriteRule ^sitemap\.xml$ sitemap.php [L]
+# Pretty URL untuk detail properti + sitemap
+RewriteRule ^property/([0-9]+)/?([A-Za-z0-9-]+)?/?$ property.php?id=$1&slug=$2 [L,QSA]
+RewriteRule ^sitemap\.xml$ sitemap.php [L]
+
+# Hilangkan ekstensi .php dari URL (redirect)
+RewriteCond %{THE_REQUEST} \s/+(.+?)\.php[?\s] [NC]
+RewriteRule ^ /%1 [R=301,L]
+
+# Akses /about -> about.php (jika file .php ada)
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME}\.php -f
+RewriteRule ^(.+)$ $1.php [L]

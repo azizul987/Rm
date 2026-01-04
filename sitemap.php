@@ -4,20 +4,20 @@ require __DIR__ . '/lib.php';
 
 header('Content-Type: application/xml; charset=utf-8');
 
-$base = rtrim(base_url(), '/');
+$base = rtrim(site_url(''), '/');
 $urls = [
   [
-    'loc' => $base . '/index.php',
+    'loc' => $base . '/',
     'changefreq' => 'daily',
     'priority' => '1.0',
   ],
   [
-    'loc' => $base . '/about.php',
+    'loc' => $base . '/about',
     'changefreq' => 'monthly',
     'priority' => '0.6',
   ],
   [
-    'loc' => $base . '/contact.php',
+    'loc' => $base . '/contact',
     'changefreq' => 'monthly',
     'priority' => '0.6',
   ],
@@ -32,7 +32,8 @@ $st = db()->query("
   ORDER BY p.id DESC
 ");
 foreach ($st->fetchAll() as $row) {
-  $loc = $base . '/property.php?id=' . (int)$row['id'];
+  $slug = slugify((string)($row['title'] ?? 'properti'));
+  $loc = $base . '/property/' . (int)$row['id'] . '/' . $slug;
   $lastmod = !empty($row['updated_at']) ? date('Y-m-d', strtotime($row['updated_at'])) : null;
   $urls[] = [
     'loc' => $loc,

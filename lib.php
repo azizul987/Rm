@@ -47,6 +47,12 @@ function site_url(string $path): string {
   return $base . ($dir ? $dir : '') . $path;
 }
 
+function admin_url(string $path = ''): string {
+  $base = rtrim(site_url('admin/'), '/');
+  if ($path === '') return $base;
+  return $base . '/' . ltrim($path, '/');
+}
+
 function current_url(): string {
   $uri = $_SERVER['REQUEST_URI'] ?? '/';
   return rtrim(base_url(), '/') . $uri;

@@ -118,7 +118,7 @@ if ($type !== '' || $location !== '' || $q !== '') {
 if ($q !== '' || $type !== '' || $location !== '' || $page > 1) {
   $page_robots = 'noindex, follow';
 }
-$page_canonical = 'index.php';
+$page_canonical = site_url('');
 
 // fallback image (SVG)
 $fallbackSvg = 'data:image/svg+xml;charset=utf-8,' . rawurlencode(
@@ -132,11 +132,17 @@ $fallbackSvg = 'data:image/svg+xml;charset=utf-8,' . rawurlencode(
 function render_cards(array $rows, string $fallbackSvg): string {
   ob_start();
   foreach ($rows as $p) {
+    $slug = slugify((string)($p['title'] ?? 'properti'));
+    $href = site_url('property/' . (int)$p['id'] . '/' . $slug);
+    $cover = $p['cover'] ?: $fallbackSvg;
+    if ($cover && !str_starts_with($cover, 'data:')) {
+      $cover = abs_url($cover);
+    }
     ?>
-    <a class="card" href="property.php?id=<?= (int)$p['id'] ?>">
+    <a class="card" href="<?= e($href) ?>">
       <div class="thumb">
         <img
-          src="<?= e($p['cover'] ?: $fallbackSvg) ?>"
+          src="<?= e($cover) ?>"
           alt="<?= e($p['title']) ?>"
         />
       </div>
@@ -177,7 +183,7 @@ function render_cards(array $rows, string $fallbackSvg): string {
 $isAjax = get_str('ajax') === '1';
 if ($isAjax) {
   $nextUrl = $hasMore
-    ? ('index.php?' . http_build_query(array_merge($baseParams, ['page' => $page + 1])))
+    ? (site_url('') . '?' . http_build_query(array_merge($baseParams, ['page' => $page + 1])))
     : '';
   header('Content-Type: application/json; charset=utf-8');
   echo json_encode([
@@ -200,7 +206,7 @@ include __DIR__ . '/header.php';
       <p><?= e($heroSubtitle) ?></p>
     </div>
 
-    <form class="filters" method="get" action="index.php">
+    <form class="filters" method="get" action="<?= e(site_url('')) ?>">
       <input class="input" type="text" name="q" placeholder="<?= e($searchPlaceholder) ?>" value="<?= e($q) ?>" />
 
       <select class="select" name="type">
@@ -239,7 +245,7 @@ include __DIR__ . '/header.php';
   </section>
 
   <?php if ($hasMore): ?>
-    <?php $nextUrl = 'index.php?' . http_build_query(array_merge($baseParams, ['page' => $page + 1])); ?>
+    <?php $nextUrl = site_url('') . '?' . http_build_query(array_merge($baseParams, ['page' => $page + 1])); ?>
     <div class="load-more">
       <a class="btn btn-load-more" id="load-more" href="<?= e($nextUrl) ?>" data-next-url="<?= e($nextUrl) ?>">
         Muat lagi
@@ -253,10 +259,10 @@ include __DIR__ . '/header.php';
   '@context' => 'https://schema.org',
   '@type' => 'WebSite',
   'name' => $siteName,
-  'url' => base_url() . '/index.php',
+  'url' => site_url(''),
   'potentialAction' => [
     '@type' => 'SearchAction',
-    'target' => base_url() . '/index.php?q={search_term_string}',
+    'target' => site_url('') . '?q={search_term_string}',
     'query-input' => 'required name=search_term_string',
   ],
 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>

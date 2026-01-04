@@ -43,7 +43,7 @@ $sec2List = about_list('about_sec2_list', [
 
 $page_description = str_excerpt($aboutIntro, 155);
 $page_og_type = 'website';
-$page_canonical = base_url() . '/about.php';
+$page_canonical = site_url('about');
 
 include __DIR__ . '/header.php';
 ?>
@@ -109,7 +109,7 @@ include __DIR__ . '/header.php';
   '@context' => 'https://schema.org',
   '@type' => 'Organization',
   'name' => $siteName,
-  'url' => base_url() . '/index.php',
+  'url' => site_url(''),
   'logo' => abs_url(setting('logo_path', 'Assets/logo.png') ?? 'Assets/logo.png'),
 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>
 </script>

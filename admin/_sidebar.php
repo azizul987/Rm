@@ -14,20 +14,20 @@ function admin_nav_item(string $href, string $label, string $key, string $active
   <div class="admin-sidebar-title">Navigasi</div>
 
   <nav class="admin-nav">
-    <?= admin_nav_item('index.php', 'Dashboard', 'dashboard', $active) ?>
-    <?= admin_nav_item('properties.php', 'Kelola Properti', 'properties', $active) ?>
+    <?= admin_nav_item(admin_url('index.php'), 'Dashboard', 'dashboard', $active) ?>
+    <?= admin_nav_item(admin_url('properties.php'), 'Kelola Properti', 'properties', $active) ?>
     <?php if (is_superadmin() || is_admin()): ?>
-      <?= admin_nav_item('sales.php', 'Kelola Sales', 'sales', $active) ?>
-      <?= admin_nav_item('settings.php', 'Pengaturan Brand', 'settings_brand', $active) ?>
-      <?= admin_nav_item('settings_home.php', 'Pengaturan Home', 'settings_home', $active) ?>
-      <?= admin_nav_item('settings_about.php', 'Pengaturan About', 'settings_about', $active) ?>
-      <?= admin_nav_item('settings_contact.php', 'Pengaturan Contact', 'settings_contact', $active) ?>
-      <?= admin_nav_item('users.php', 'Manajemen Admin', 'users', $active) ?>
+      <?= admin_nav_item(admin_url('sales.php'), 'Kelola Sales', 'sales', $active) ?>
+      <?= admin_nav_item(admin_url('settings.php'), 'Pengaturan Brand', 'settings_brand', $active) ?>
+      <?= admin_nav_item(admin_url('settings_home.php'), 'Pengaturan Home', 'settings_home', $active) ?>
+      <?= admin_nav_item(admin_url('settings_about.php'), 'Pengaturan About', 'settings_about', $active) ?>
+      <?= admin_nav_item(admin_url('settings_contact.php'), 'Pengaturan Contact', 'settings_contact', $active) ?>
+      <?= admin_nav_item(admin_url('users.php'), 'Manajemen Admin', 'users', $active) ?>
     <?php endif; ?>
   </nav>
 
   <div class="admin-sidebar-foot">
-    <a class="action action-block" href="../index.php" target="_blank" rel="noopener">Lihat Website</a>
-    <a class="action action-block" href="logout.php">Logout</a>
+    <a class="action action-block" href="<?= e(site_url('')) ?>" target="_blank" rel="noopener">Lihat Website</a>
+    <a class="action action-block" href="<?= e(admin_url('logout.php')) ?>">Logout</a>
   </div>
 </aside>

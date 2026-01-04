@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $_SESSION['user_email'] = $u['email'];
     $_SESSION['user_role'] = $u['role'] ?? 'editor';
     $_SESSION['user_status'] = $u['status'] ?? 'active';
-    header('Location: index.php');
+    header('Location: ' . admin_url('index.php'));
     exit;
   }
   $error = 'Email atau password salah.';
@@ -282,7 +282,7 @@ if (!empty($rawLogo)) {
       </div>
 
       <div class="auth-foot">
-        <a href="../index.php">← Kembali ke Website</a>
+        <a href="<?= e(site_url('')) ?>">← Kembali ke Website</a>
         <span class="muted" style="font-size:12px">© <?= date('Y') ?> <?= e($siteName) ?></span>
       </div>
 

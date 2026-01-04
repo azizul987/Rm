@@ -89,7 +89,7 @@ include __DIR__ . '/_header.php';
       </div>
 
       <div class="admin-quick">
-        <a class="action" href="index.php">← Kembali</a>
+        <a class="action" href="<?= e(admin_url('index.php')) ?>">← Kembali</a>
       </div>
     </div>
 
@@ -152,7 +152,7 @@ include __DIR__ . '/_header.php';
 
         <div class="actions" style="margin-top:14px">
           <button class="action accent" type="submit">Simpan Pengaturan</button>
-          <a class="action" href="index.php">Batal</a>
+          <a class="action" href="<?= e(admin_url('index.php')) ?>">Batal</a>
         </div>
       </form>
     </div>

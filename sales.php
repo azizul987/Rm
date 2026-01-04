@@ -15,7 +15,7 @@ if (!$s) {
     <h2>Sales tidak ditemukan</h2>
     <p class="muted">ID tidak valid atau data belum tersedia.</p>
     <div class="actions">
-      <a class="action accent" href="index.php">Kembali</a>
+      <a class="action accent" href="<?= e(site_url('')) ?>">Kembali</a>
     </div>
   </div>
   <?php
@@ -31,7 +31,7 @@ $waText = "Halo {$s['name']}, saya ingin konsultasi properti dari RM Properti.";
 
 $page_description = str_excerpt((string)($s['bio'] ?? ''), 155);
 $page_og_type = 'profile';
-$page_canonical = base_url() . '/sales.php?id=' . urlencode($s['id']);
+$page_canonical = site_url('sales.php?id=' . urlencode($s['id']));
 if (!str_starts_with($salesPhoto, 'data:')) {
   $page_image = $salesPhoto;
 }
@@ -70,8 +70,12 @@ include __DIR__ . '/header.php';
 
 <section class="grid">
   <?php foreach ($handled as $p): ?>
-    <?php $cover = first_image_or_placeholder($p['images'] ?? [], $p['title']); ?>
-    <a class="card" href="property.php?id=<?= (int)$p['id'] ?>">
+    <?php
+      $cover = first_image_or_placeholder($p['images'] ?? [], $p['title']);
+      $slug = slugify((string)($p['title'] ?? 'properti'));
+      $href = site_url('property/' . (int)$p['id'] . '/' . $slug);
+    ?>
+    <a class="card" href="<?= e($href) ?>">
       <div class="thumb">
         <img src="<?= e($cover) ?>" alt="<?= e($p['title']) ?>" />
       </div>
