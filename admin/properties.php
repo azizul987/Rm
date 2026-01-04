@@ -131,7 +131,7 @@ include __DIR__ . '/_header.php';
       </div>
 
       <div class="admin-quick">
-        <a class="action accent" href="property_edit.php">+ Tambah Properti</a>
+        <a class="action accent" href="property_edit">+ Tambah Properti</a>
       </div>
     </div>
 
@@ -191,7 +191,7 @@ include __DIR__ . '/_header.php';
 
         <div class="admin-filters-actions">
           <button class="action accent" type="submit">Terapkan</button>
-          <a class="action" href="properties.php">Reset</a>
+          <a class="action" href="properties">Reset</a>
         </div>
       </form>
     </div>
@@ -246,9 +246,9 @@ include __DIR__ . '/_header.php';
 
                   <td class="td-actions">
                     <div class="admin-actions-cell">
-                      <a class="action accent" href="property_edit.php?id=<?= (int)$p['id'] ?>">Edit</a>
+                      <a class="action accent" href="property_edit?id=<?= (int)$p['id'] ?>">Edit</a>
                       <?php if (!is_editor()): ?>
-                        <form method="post" action="property_status.php" class="admin-inline">
+                        <form method="post" action="property_status" class="admin-inline">
                           <input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>">
                           <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
 
@@ -259,7 +259,7 @@ include __DIR__ . '/_header.php';
                           </select>
                         </form>
 
-                        <form method="post" action="property_delete.php" class="admin-inline">
+                        <form method="post" action="property_delete" class="admin-inline">
                           <input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>">
                           <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
                           <button
@@ -281,8 +281,8 @@ include __DIR__ . '/_header.php';
 
         <?php if ($totalPages > 1): ?>
           <?php
-            $prevUrl = $hasPrev ? ('properties.php?' . http_build_query(array_merge($baseParams, ['page' => $page - 1]))) : '#';
-            $nextUrl = $hasNext ? ('properties.php?' . http_build_query(array_merge($baseParams, ['page' => $page + 1]))) : '#';
+            $prevUrl = $hasPrev ? ('properties?' . http_build_query(array_merge($baseParams, ['page' => $page - 1]))) : '#';
+            $nextUrl = $hasNext ? ('properties?' . http_build_query(array_merge($baseParams, ['page' => $page + 1]))) : '#';
           ?>
           <div class="admin-pagination">
             <a class="action" href="<?= e($prevUrl) ?>" <?= $hasPrev ? '' : 'aria-disabled="true"' ?>>← Sebelumnya</a>

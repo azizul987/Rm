@@ -14,13 +14,19 @@ $error = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  csrf_check();
+  if (post_too_large()) {
+    $error = 'Ukuran upload melebihi batas server (post_max_size).';
+  } else {
+    csrf_check();
+  }
 
   $siteName = trim($_POST['site_name'] ?? '');
   $tagline  = trim($_POST['site_tagline'] ?? '');
   $footer   = trim($_POST['footer_text'] ?? '');
   $removeLogo = (string)($_POST['remove_logo'] ?? '') === '1';
-  if ($siteName === '') {
+  if ($error) {
+    // keep error from post_too_large or csrf_check
+  } elseif ($siteName === '') {
     $error = 'Nama website wajib diisi.';
   } else {
     set_setting('site_name', $siteName);
@@ -74,7 +80,7 @@ $curLogo = setting('logo_path', null);
       </div>
 
       <div class="admin-quick">
-        <a class="action" href="<?= e(admin_url('index.php')) ?>">← Kembali</a>
+        <a class="action" href="<?= e(admin_url('index')) ?>">← Kembali</a>
       </div>
     </div>
 
@@ -88,7 +94,7 @@ $curLogo = setting('logo_path', null);
         <div class="admin-notice success"><?= e($success) ?></div>
       <?php endif; ?>
 
-      <form method="post" enctype="multipart/form-data" class="settings-form">
+      <form method="post" action="settings" enctype="multipart/form-data" class="settings-form">
         <input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>">
 
         <div class="settings-layout">
@@ -118,7 +124,7 @@ $curLogo = setting('logo_path', null);
 
             <div class="actions" style="margin-top:14px">
               <button class="action accent" type="submit">Simpan Pengaturan</button>
-              <a class="action" href="<?= e(admin_url('index.php')) ?>">Batal</a>
+              <a class="action" href="<?= e(admin_url('index')) ?>">Batal</a>
             </div>
           </div>
 
@@ -133,7 +139,7 @@ $curLogo = setting('logo_path', null);
 
             <div class="settings-logo-preview" id="logoPreview">
               <?php if (!empty($curLogo)): ?>
-                <img src="<?= e($curLogo) ?>" alt="Logo <?= e($curName) ?>">
+                <img src="<?= e(abs_url($curLogo)) ?>" alt="Logo <?= e($curName) ?>">
               <?php else: ?>
                 <div class="settings-logo-fallback" aria-hidden="true">
                   <?= e(mb_strtoupper(mb_substr($curName ?: 'RM', 0, 2))) ?>

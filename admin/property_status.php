@@ -15,5 +15,5 @@ if ($id <= 0 || !in_array($status, $allowed, true)) {
 $st = db()->prepare("UPDATE properties SET status=? WHERE id=?");
 $st->execute([$status, $id]);
 
-header('Location: properties.php');
+header('Location: properties');
 exit;

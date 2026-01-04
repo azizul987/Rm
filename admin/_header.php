@@ -77,7 +77,7 @@ $logoUrl = $rawLogo ? abs_url($rawLogo) : null;
       <!-- Menu header (desktop tampil inline; mobile jadi dropdown via body.nav-open) -->
       <nav class="nav" id="adminNav" aria-label="Menu Admin">
         <a href="<?= e(site_url('')) ?>" target="_blank" rel="noopener">Lihat Website</a>
-        <a href="<?= e(admin_url('logout.php')) ?>">Logout</a>
+        <a href="<?= e(admin_url('logout')) ?>">Logout</a>
       </nav>
 
     </div>

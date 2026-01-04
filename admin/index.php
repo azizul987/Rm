@@ -85,9 +85,9 @@ function status_badge($status){
       </div>
 
       <div class="admin-quick">
-        <a class="action accent" href="property_edit.php">+ Tambah Properti</a>
+        <a class="action accent" href="property_edit">+ Tambah Properti</a>
         <?php if (!is_editor()): ?>
-          <a class="action" href="sales_edit.php">+ Tambah Sales</a>
+          <a class="action" href="sales_edit">+ Tambah Sales</a>
         <?php endif; ?>
       </div>
     </div>
@@ -100,8 +100,8 @@ function status_badge($status){
         <div class="muted">Aktif: <strong><?= $activeProps ?></strong></div>
 
         <div class="actions">
-          <a class="action accent" href="properties.php">Kelola Properti</a>
-          <a class="action" href="property_edit.php">Tambah Baru</a>
+          <a class="action accent" href="properties">Kelola Properti</a>
+          <a class="action" href="property_edit">Tambah Baru</a>
         </div>
       </div>
 
@@ -113,8 +113,8 @@ function status_badge($status){
           <div class="muted">Pastikan WA format <strong>62...</strong></div>
 
           <div class="actions">
-            <a class="action accent" href="sales.php">Kelola Sales</a>
-            <a class="action" href="sales_edit.php">Tambah Sales</a>
+            <a class="action accent" href="sales">Kelola Sales</a>
+            <a class="action" href="sales_edit">Tambah Sales</a>
           </div>
         </div>
 
@@ -125,7 +125,7 @@ function status_badge($status){
           <div class="muted">Branding & tampilan</div>
 
           <div class="actions">
-            <a class="action accent" href="settings.php">Buka Pengaturan</a>
+            <a class="action accent" href="settings">Buka Pengaturan</a>
           </div>
         </div>
       <?php endif; ?>
@@ -138,7 +138,7 @@ function status_badge($status){
           <p class="muted">Perubahan listing terakhir (berdasarkan waktu update).</p>
         </div>
         <div>
-          <a class="action" href="properties.php">Lihat Semua</a>
+          <a class="action" href="properties">Lihat Semua</a>
         </div>
       </div>
 
@@ -169,7 +169,7 @@ function status_badge($status){
                   <td><?= e($r['sales_name'] ?? '-') ?></td>
                   <td><?= e(fmt_dt($r['updated_at'])) ?></td>
                   <td class="td-actions">
-                    <a class="action accent" href="property_edit.php?id=<?= (int)$r['id'] ?>">Edit</a>
+                    <a class="action accent" href="property_edit?id=<?= (int)$r['id'] ?>">Edit</a>
                   </td>
                 </tr>
               <?php endforeach; ?>

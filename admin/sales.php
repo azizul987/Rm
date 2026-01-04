@@ -43,12 +43,12 @@ include __DIR__ . '/_header.php';
       </div>
 
       <div class="admin-quick">
-        <a class="action accent" href="sales_edit.php">+ Tambah Sales</a>
+        <a class="action accent" href="sales_edit">+ Tambah Sales</a>
       </div>
     </div>
 
     <div class="panel admin-panel">
-      <form method="get" class="admin-filters" action="sales.php">
+      <form method="get" class="admin-filters" action="sales">
         <div class="field">
           <label class="label">Cari Sales</label>
           <input class="input" name="q" placeholder="Nama / WA / Email / Telepon" value="<?= e($q) ?>">
@@ -56,7 +56,7 @@ include __DIR__ . '/_header.php';
 
         <div class="admin-filters-actions">
           <button class="action accent" type="submit">Cari</button>
-          <a class="action" href="sales.php">Reset</a>
+          <a class="action" href="sales">Reset</a>
         </div>
       </form>
 
@@ -78,7 +78,7 @@ include __DIR__ . '/_header.php';
               <?php if (!empty($s['photo_path'])): ?>
                 <img
                   class="sales-avatar"
-                  src="<?= e($s['photo_path']) ?>"
+                  src="<?= e(abs_url($s['photo_path'])) ?>"
                   alt="<?= e($s['name']) ?>"
                   loading="lazy"
                 >
@@ -114,9 +114,9 @@ include __DIR__ . '/_header.php';
             </div>
 
             <div class="sales-actions">
-              <a class="action accent" href="sales_edit.php?id=<?= (int)$s['id'] ?>">Edit</a>
+              <a class="action accent" href="sales_edit?id=<?= (int)$s['id'] ?>">Edit</a>
 
-              <form method="post" action="sales_delete.php" class="admin-inline">
+              <form method="post" action="sales_delete" class="admin-inline">
                 <input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>">
                 <input type="hidden" name="id" value="<?= (int)$s['id'] ?>">
                 <button

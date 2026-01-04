@@ -79,12 +79,26 @@ function str_excerpt(string $text, int $max = 160): string {
 function csrf_token(): string {
   if (session_status() !== PHP_SESSION_ACTIVE) session_start();
   if (empty($_SESSION['_csrf'])) $_SESSION['_csrf'] = bin2hex(random_bytes(16));
+  if (empty($_COOKIE['rm_csrf']) || $_COOKIE['rm_csrf'] !== $_SESSION['_csrf']) {
+    setcookie('rm_csrf', $_SESSION['_csrf'], [
+      'path' => '/',
+      'httponly' => true,
+      'samesite' => 'Lax',
+    ]);
+  }
   return $_SESSION['_csrf'];
 }
 function csrf_check(): void {
   if (session_status() !== PHP_SESSION_ACTIVE) session_start();
   $t = $_POST['_csrf'] ?? '';
-  if (!$t || empty($_SESSION['_csrf']) || !hash_equals($_SESSION['_csrf'], $t)) {
+  $sess = $_SESSION['_csrf'] ?? '';
+  if ($t !== '' && $sess !== '' && hash_equals($sess, $t)) return;
+  $cookie = $_COOKIE['rm_csrf'] ?? '';
+  if ($t !== '' && $cookie !== '' && hash_equals($cookie, $t)) {
+    $_SESSION['_csrf'] = $cookie;
+    return;
+  }
+  if (!$t || $sess === '' || !hash_equals($sess, $t)) {
     http_response_code(400);
     exit('CSRF validation failed.');
   }
@@ -92,9 +106,10 @@ function csrf_check(): void {
 
 function upload_image(array $file, string $destDir, int $maxBytes): array {
   if (!isset($file['error']) || is_array($file['error'])) return [false, 'Invalid upload payload', null];
-  if ($file['error'] !== UPLOAD_ERR_OK) return [false, 'Upload error code: ' . $file['error'], null];
+  if ($file['error'] !== UPLOAD_ERR_OK) return [false, upload_error_message($file['error']), null];
   if ($file['size'] > $maxBytes) return [false, 'File terlalu besar', null];
 
+  if (!class_exists('finfo')) return [false, 'Ekstensi fileinfo belum aktif di server.', null];
   $finfo = new finfo(FILEINFO_MIME_TYPE);
   $mime = $finfo->file($file['tmp_name']);
   $allowed = [
@@ -104,13 +119,37 @@ function upload_image(array $file, string $destDir, int $maxBytes): array {
   ];
   if (!isset($allowed[$mime])) return [false, 'Format harus JPG/PNG/WebP', null];
 
-  if (!is_dir($destDir)) mkdir($destDir, 0755, true);
+  if (!is_dir($destDir)) {
+    if (!mkdir($destDir, 0755, true)) return [false, 'Gagal membuat folder upload.', null];
+  }
+  if (!is_writable($destDir)) return [false, 'Folder upload tidak bisa ditulis.', null];
 
   $name = bin2hex(random_bytes(16)) . '.' . $allowed[$mime];
   $path = rtrim($destDir, '/') . '/' . $name;
 
-  if (!move_uploaded_file($file['tmp_name'], $path)) return [false, 'Gagal memindahkan file', null];
+  if (!move_uploaded_file($file['tmp_name'], $path)) return [false, 'Gagal memindahkan file upload.', null];
   return [true, null, $name];
+}
+
+function upload_error_message(int $code): string {
+  switch ($code) {
+    case UPLOAD_ERR_INI_SIZE:
+      return 'File melebihi batas upload_max_filesize di server.';
+    case UPLOAD_ERR_FORM_SIZE:
+      return 'File melebihi batas MAX_FILE_SIZE di form.';
+    case UPLOAD_ERR_PARTIAL:
+      return 'File hanya terupload sebagian.';
+    case UPLOAD_ERR_NO_FILE:
+      return 'Tidak ada file yang dikirim.';
+    case UPLOAD_ERR_NO_TMP_DIR:
+      return 'Folder temp upload tidak ditemukan.';
+    case UPLOAD_ERR_CANT_WRITE:
+      return 'Gagal menulis file ke disk.';
+    case UPLOAD_ERR_EXTENSION:
+      return 'Upload dihentikan oleh ekstensi PHP.';
+    default:
+      return 'Upload error code: ' . $code;
+  }
 }
 
 function features_to_json(string $text): ?string {
@@ -162,6 +201,22 @@ function videos_from_json(?string $json): string {
     if ($id !== '') $urls[] = 'https://youtu.be/' . $id;
   }
   return implode("\n", $urls);
+}
+
+function post_too_large(): bool {
+  $len = (int)($_SERVER['CONTENT_LENGTH'] ?? 0);
+  if ($len <= 0) return false;
+
+  $raw = trim((string)ini_get('post_max_size'));
+  if ($raw === '') return false;
+  $unit = strtoupper(substr($raw, -1));
+  $num = (int)$raw;
+  $max = $num;
+  if ($unit === 'K') $max = $num * 1024;
+  elseif ($unit === 'M') $max = $num * 1024 * 1024;
+  elseif ($unit === 'G') $max = $num * 1024 * 1024 * 1024;
+
+  return $max > 0 && $len > $max;
 }
 
 function setting(string $key, ?string $default = null): ?string {

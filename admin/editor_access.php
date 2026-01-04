@@ -20,6 +20,8 @@ if (!$editor || ($editor['role'] ?? '') !== 'editor') {
   exit('Editor tidak ditemukan.');
 }
 
+$formAction = 'editor_access?id=' . $editorId;
+
 $error = '';
 $success = '';
 
@@ -79,7 +81,7 @@ include __DIR__ . '/_header.php';
         <p class="muted">Atur sales dan properti yang boleh diakses oleh editor.</p>
       </div>
       <div class="admin-quick">
-        <a class="action" href="users.php">← Kembali</a>
+        <a class="action" href="users">← Kembali</a>
       </div>
     </div>
 
@@ -95,7 +97,7 @@ include __DIR__ . '/_header.php';
         Editor: <strong><?= e($editor['email']) ?></strong>
       </div>
 
-      <form method="post">
+      <form method="post" action="<?= e($formAction) ?>">
         <input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>">
 
         <div class="admin-grid admin-grid-2">
@@ -132,7 +134,7 @@ include __DIR__ . '/_header.php';
 
         <div class="actions" style="margin-top:14px">
           <button class="action accent" type="submit">Simpan Akses</button>
-          <a class="action" href="users.php">Batal</a>
+          <a class="action" href="users">Batal</a>
         </div>
       </form>
     </div>

@@ -43,5 +43,5 @@ if ($ownerId > 0) {
   }
 }
 
-header('Location: properties.php');
+header('Location: properties');
 exit;

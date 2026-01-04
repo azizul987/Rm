@@ -11,6 +11,7 @@ $editorCredit = null;
 
 $id = (int)($_GET['id'] ?? 0);
 $p = null;
+$formAction = $id ? ('property_edit?id=' . (int)$id) : 'property_edit';
 
 if ($id) {
   $st = $pdo->prepare("SELECT * FROM properties WHERE id=?");
@@ -77,7 +78,11 @@ function fmt_dt($value){
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  csrf_check();
+  if (post_too_large()) {
+    $error = 'Ukuran upload melebihi batas server (post_max_size).';
+  } else {
+    csrf_check();
+  }
 
   $title = trim($_POST['title'] ?? '');
   $type = trim($_POST['type'] ?? '');
@@ -93,9 +98,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $status = trim($_POST['status'] ?? 'active');
   $salesId = ($_POST['sales_id'] ?? '') !== '' ? (int)$_POST['sales_id'] : null;
 
-  if ($title === '' || $type === '' || $location === '') {
+  if (!$error && ($title === '' || $type === '' || $location === '')) {
     $error = 'Judul, tipe, dan lokasi wajib diisi.';
-  } elseif (is_editor() && $salesId !== null && !in_array($salesId, $allowedSalesIds, true)) {
+  } elseif (!$error && is_editor() && $salesId !== null && !in_array($salesId, $allowedSalesIds, true)) {
     $error = 'Sales tidak diizinkan untuk editor ini.';
   } else {
     if ($id) {
@@ -163,7 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!$error) {
-      header('Location: properties.php');
+      header('Location: properties');
       exit;
     }
   }
@@ -194,7 +199,7 @@ include __DIR__ . '/_header.php';
       </div>
 
       <div class="admin-quick">
-        <a class="action" href="properties.php">← Kembali</a>
+        <a class="action" href="properties">← Kembali</a>
         <?php if ($id): ?>
           <a class="action" href="../property.php?id=<?= (int)$id ?>" target="_blank" rel="noopener">Preview</a>
         <?php endif; ?>
@@ -205,7 +210,7 @@ include __DIR__ . '/_header.php';
       <div class="admin-alert" role="alert"><?= e($error) ?></div>
     <?php endif; ?>
 
-    <form method="post" enctype="multipart/form-data">
+    <form method="post" action="<?= e($formAction) ?>" enctype="multipart/form-data">
       <input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>">
 
       <div class="admin-form-layout">
@@ -316,7 +321,7 @@ include __DIR__ . '/_header.php';
 
           <div class="actions" style="margin-top:14px">
             <button class="action accent" type="submit">Simpan</button>
-            <a class="action" href="properties.php">Batal</a>
+              <a class="action" href="properties">Batal</a>
           </div>
         </div>
 
@@ -351,7 +356,7 @@ include __DIR__ . '/_header.php';
 
             <div class="actions" style="margin-top:14px">
               <button class="action accent" type="submit">Simpan</button>
-              <a class="action" href="properties.php">Kembali</a>
+              <a class="action" href="properties">Kembali</a>
             </div>
           </div>
 
@@ -384,7 +389,7 @@ include __DIR__ . '/_header.php';
                         ID <?= (int)$im['id'] ?>
                       </div>
 
-                      <form method="post" action="property_image_delete.php" class="admin-inline" style="margin:0">
+                      <form method="post" action="property_image_delete" class="admin-inline" style="margin:0">
                         <input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>">
                         <input type="hidden" name="id" value="<?= (int)$im['id'] ?>">
                         <input type="hidden" name="property_id" value="<?= (int)$id ?>">

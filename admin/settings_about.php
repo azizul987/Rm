@@ -89,7 +89,7 @@ include __DIR__ . '/_header.php';
       </div>
 
       <div class="admin-quick">
-        <a class="action" href="<?= e(admin_url('index.php')) ?>">← Kembali</a>
+        <a class="action" href="<?= e(admin_url('index')) ?>">← Kembali</a>
       </div>
     </div>
 
@@ -103,7 +103,7 @@ include __DIR__ . '/_header.php';
         <div class="admin-notice success"><?= e($success) ?></div>
       <?php endif; ?>
 
-      <form method="post">
+      <form method="post" action="settings_about">
         <input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>">
 
         <div class="form-field">
@@ -152,7 +152,7 @@ include __DIR__ . '/_header.php';
 
         <div class="actions" style="margin-top:14px">
           <button class="action accent" type="submit">Simpan Pengaturan</button>
-          <a class="action" href="<?= e(admin_url('index.php')) ?>">Batal</a>
+          <a class="action" href="<?= e(admin_url('index')) ?>">Batal</a>
         </div>
       </form>
     </div>

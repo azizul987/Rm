@@ -17,10 +17,15 @@ if ($id) {
 
 $admin_title = $id ? 'Edit Sales' : 'Tambah Sales';
 $active = 'sales';
+$formAction = $id ? ('sales_edit?id=' . (int)$id) : 'sales_edit';
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  csrf_check();
+  if (post_too_large()) {
+    $error = 'Ukuran upload melebihi batas server (post_max_size).';
+  } else {
+    csrf_check();
+  }
 
   $name  = trim($_POST['name'] ?? '');
   $title = trim($_POST['title'] ?? '');
@@ -31,9 +36,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $areas = trim($_POST['areas'] ?? '');
   $exp   = (int)($_POST['experience_years'] ?? 0);
 
-  if ($name === '') {
+  if (!$error && $name === '') {
     $error = 'Nama wajib diisi.';
-  } else {
+  }
+
+  if (!$error) {
     $photoPath = $s['photo_path'] ?? null;
 
     if (!empty($_FILES['photo']['name'])) {
@@ -53,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $st = $pdo->prepare("INSERT INTO sales (name,title,phone,whatsapp,email,photo_path,bio,areas,experience_years) VALUES (?,?,?,?,?,?,?,?,?)");
         $st->execute([$name,$title,$phone,$wa,$email,$photoPath,$bio,$areas,$exp]);
       }
-      header('Location: sales.php');
+      header('Location: sales');
       exit;
     }
   }
@@ -82,7 +89,7 @@ include __DIR__ . '/_header.php';
       </div>
 
       <div class="admin-quick">
-        <a class="action" href="sales.php">← Kembali</a>
+        <a class="action" href="sales">← Kembali</a>
       </div>
     </div>
 
@@ -92,7 +99,7 @@ include __DIR__ . '/_header.php';
         <div class="admin-alert"><?= e($error) ?></div>
       <?php endif; ?>
 
-      <form method="post" enctype="multipart/form-data" class="sales-edit-form">
+      <form method="post" action="<?= e($formAction) ?>" enctype="multipart/form-data" class="sales-edit-form">
         <input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>">
 
         <div class="admin-form-layout">
@@ -148,7 +155,7 @@ include __DIR__ . '/_header.php';
 
             <div class="actions" style="margin-top:14px">
               <button class="action accent" type="submit">Simpan</button>
-              <a class="action" href="sales.php">Batal</a>
+              <a class="action" href="sales">Batal</a>
             </div>
           </div>
 
@@ -167,7 +174,7 @@ include __DIR__ . '/_header.php';
 
             <div class="sales-photo-preview" id="photoPreview">
               <?php if (!empty($s['photo_path'])): ?>
-                <img src="<?= e($s['photo_path']) ?>" alt="Foto <?= e($s['name'] ?? 'Sales') ?>">
+                <img src="<?= e(abs_url($s['photo_path'])) ?>" alt="Foto <?= e($s['name'] ?? 'Sales') ?>">
               <?php else: ?>
                 <div class="sales-photo-fallback" aria-hidden="true">
                   <?= e(mb_strtoupper(mb_substr(($s['name'] ?? 'S'), 0, 1))) ?>

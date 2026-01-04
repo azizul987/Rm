@@ -2,14 +2,22 @@
 require __DIR__ . '/../db.php';
 require __DIR__ . '/../lib.php';
 
-session_start();
+if (session_status() !== PHP_SESSION_ACTIVE) {
+  session_name('rm_admin_sess');
+  session_set_cookie_params([
+    'path' => '/',
+    'httponly' => true,
+    'samesite' => 'Lax',
+  ]);
+  session_start();
+}
 
 function is_logged_in(): bool {
   return !empty($_SESSION['user_id']);
 }
 function require_login(): void {
   if (!is_logged_in()) {
-    header('Location: login.php');
+    header('Location: login');
     exit;
   }
 }
@@ -44,7 +52,7 @@ function is_frozen(): bool {
 
 function require_role(array $roles): void {
   if (!is_logged_in()) {
-    header('Location: login.php');
+    header('Location: login');
     exit;
   }
   $role = admin_user_role();

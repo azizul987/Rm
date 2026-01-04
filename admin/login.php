@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $_SESSION['user_email'] = $u['email'];
     $_SESSION['user_role'] = $u['role'] ?? 'editor';
     $_SESSION['user_status'] = $u['status'] ?? 'active';
-    header('Location: ' . admin_url('index.php'));
+    header('Location: ' . admin_url('index'));
     exit;
   }
   $error = 'Email atau password salah.';
@@ -218,7 +218,7 @@ if (!empty($rawLogo)) {
           </div>
         <?php endif; ?>
 
-        <form method="post" class="auth-form" autocomplete="on">
+        <form method="post" action="login" class="auth-form" autocomplete="on">
           <input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>">
 
           <div class="field">

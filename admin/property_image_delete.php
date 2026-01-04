@@ -42,5 +42,5 @@ if ($path) {
 
 $pdo->prepare("DELETE FROM property_images WHERE id=?")->execute([$imgId]);
 
-header('Location: property_edit.php?id=' . $propertyId);
+header('Location: property_edit?id=' . $propertyId);
 exit;

@@ -25,5 +25,5 @@ if ($row && !empty($row['photo_path'])) {
 $del = $pdo->prepare("DELETE FROM sales WHERE id=?");
 $del->execute([$id]);
 
-header('Location: sales.php');
+header('Location: sales');
 exit;

@@ -123,7 +123,7 @@ include __DIR__ . '/_header.php';
         <div class="admin-notice success"><?= e($success) ?></div>
       <?php endif; ?>
 
-      <form method="post" class="admin-filters" style="margin-top:6px">
+      <form method="post" action="users" class="admin-filters" style="margin-top:6px">
         <input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>">
         <input type="hidden" name="action" value="add_user">
 
@@ -193,9 +193,9 @@ include __DIR__ . '/_header.php';
                 <td class="td-actions">
                   <div class="admin-actions-cell">
                     <?php if (($u['role'] ?? '') === 'editor'): ?>
-                      <a class="action" href="editor_access.php?id=<?= (int)$u['id'] ?>">Akses Editor</a>
+                      <a class="action" href="editor_access?id=<?= (int)$u['id'] ?>">Akses Editor</a>
 
-                      <form method="post" class="admin-inline">
+                      <form method="post" action="users" class="admin-inline">
                         <input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>">
                         <input type="hidden" name="action" value="update_editor">
                         <input type="hidden" name="id" value="<?= (int)$u['id'] ?>">
@@ -209,7 +209,7 @@ include __DIR__ . '/_header.php';
                     <?php endif; ?>
 
                     <?php if (is_superadmin()): ?>
-                      <form method="post" class="admin-inline">
+                      <form method="post" action="users" class="admin-inline">
                         <input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>">
                         <input type="hidden" name="action" value="reset_password">
                         <input type="hidden" name="id" value="<?= (int)$u['id'] ?>">
@@ -217,7 +217,7 @@ include __DIR__ . '/_header.php';
                         <button class="action" type="submit">Ubah Password</button>
                       </form>
 
-                      <form method="post" class="admin-inline">
+                      <form method="post" action="users" class="admin-inline">
                         <input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>">
                         <input type="hidden" name="action" value="delete_user">
                         <input type="hidden" name="id" value="<?= (int)$u['id'] ?>">
