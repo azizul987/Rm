@@ -33,6 +33,7 @@ CREATE TABLE properties (
   id INT AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(220) NOT NULL,
   type VARCHAR(80) NOT NULL,
+  listing_type VARCHAR(40) NOT NULL DEFAULT 'primary',
   price BIGINT NOT NULL DEFAULT 0,
   location VARCHAR(120) NOT NULL,
   beds INT NOT NULL DEFAULT 0,
@@ -70,6 +71,35 @@ CREATE TABLE property_images (
   CONSTRAINT fk_images_property
     FOREIGN KEY (property_id) REFERENCES properties(id)
     ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- PROPERTY VIEWS (tracking)
+CREATE TABLE property_views (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  property_id INT NOT NULL,
+  viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_property_views_property (property_id),
+  CONSTRAINT fk_property_views_property
+    FOREIGN KEY (property_id) REFERENCES properties(id)
+    ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- SITE VISITS (tracking)
+CREATE TABLE site_visits (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- PORTFOLIO ITEMS (client logos)
+CREATE TABLE portfolio_items (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(190) NOT NULL,
+  image_path VARCHAR(255) NOT NULL,
+  url VARCHAR(255) DEFAULT NULL,
+  sort_order INT NOT NULL DEFAULT 0,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 -- EDITOR SALES ACCESS

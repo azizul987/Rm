@@ -28,6 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $aboutSec1List  = trim($_POST['about_sec1_list'] ?? '');
   $aboutSec2Title = trim($_POST['about_sec2_title'] ?? '');
   $aboutSec2List  = trim($_POST['about_sec2_list'] ?? '');
+  $aboutPortfolioTitle = trim($_POST['about_portfolio_title'] ?? '');
+  $aboutPortfolioSubtitle = trim($_POST['about_portfolio_subtitle'] ?? '');
 
   if ($aboutIntro === '') {
     $error = 'Intro About wajib diisi.';
@@ -46,6 +48,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     set_setting('about_sec1_list', features_to_json($aboutSec1List));
     set_setting('about_sec2_title', $aboutSec2Title);
     set_setting('about_sec2_list', features_to_json($aboutSec2List));
+    set_setting('about_portfolio_title', $aboutPortfolioTitle);
+    set_setting('about_portfolio_subtitle', $aboutPortfolioSubtitle);
 
     $success = 'Pengaturan About berhasil disimpan.';
   }
@@ -71,6 +75,8 @@ $curAboutSec1List  = features_from_json(setting('about_sec1_list', null));
 $curAboutSec2List  = features_from_json(setting('about_sec2_list', null));
 if ($curAboutSec1List === '') $curAboutSec1List = $defaultSec1List;
 if ($curAboutSec2List === '') $curAboutSec2List = $defaultSec2List;
+$curAboutPortfolioTitle = setting('about_portfolio_title', '') ?? '';
+$curAboutPortfolioSubtitle = setting('about_portfolio_subtitle', '') ?? '';
 
 include __DIR__ . '/_header.php';
 ?>
@@ -148,6 +154,12 @@ include __DIR__ . '/_header.php';
           <label class="form-label">Section 2</label>
           <input class="input" name="about_sec2_title" placeholder="Judul section" value="<?= e($curAboutSec2Title) ?>">
           <textarea class="input admin-textarea" name="about_sec2_list" rows="4" placeholder="Satu item per baris"><?= e($curAboutSec2List) ?></textarea>
+        </div>
+
+        <div class="form-field" style="margin-top:12px">
+          <label class="form-label">Portofolio</label>
+          <input class="input" name="about_portfolio_title" placeholder="Judul Portofolio" value="<?= e($curAboutPortfolioTitle) ?>">
+          <input class="input" name="about_portfolio_subtitle" style="margin-top:10px" placeholder="Subjudul Portofolio" value="<?= e($curAboutPortfolioSubtitle) ?>">
         </div>
 
         <div class="actions" style="margin-top:14px">

@@ -37,7 +37,7 @@ if ($ownerId > 0) {
   $st = $pdo->prepare("SELECT role FROM users WHERE id=?");
   $st->execute([$ownerId]);
   $role = $st->fetchColumn();
-  if ($role === 'editor') {
+  if (in_array($role, ['sales', 'editor'], true)) {
     $pdo->prepare("UPDATE users SET credit_used = GREATEST(credit_used - 1, 0) WHERE id=?")
         ->execute([$ownerId]);
   }

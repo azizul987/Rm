@@ -41,6 +41,28 @@ $sec2List = about_list('about_sec2_list', [
   'Pendampingan hingga closing',
 ]);
 
+$portfolioTitleDefault = 'PORTOFOLIO ' . $siteName;
+$portfolioSubtitleDefault = 'Terima kasih atas kepercayaan Anda';
+$portfolioTitle = setting('about_portfolio_title', $portfolioTitleDefault) ?? $portfolioTitleDefault;
+$portfolioSubtitle = setting('about_portfolio_subtitle', $portfolioSubtitleDefault) ?? $portfolioSubtitleDefault;
+
+$portfolioItems = [];
+$st = db()->query("SELECT id, title, image_path, url
+                   FROM portfolio_items
+                   WHERE is_active=1
+                   ORDER BY sort_order ASC, id DESC");
+$portfolioItems = $st->fetchAll();
+
+function portfolio_logo_url_public(?string $path): ?string {
+  if (!$path) return null;
+  if (str_starts_with($path, 'data:')) return $path;
+  if (preg_match('~^https?://~i', $path) || str_starts_with($path, '/')) return $path;
+
+  $local = __DIR__ . '/' . ltrim($path, '/');
+  if (!file_exists($local)) return null;
+  return abs_url($path);
+}
+
 $page_description = str_excerpt($aboutIntro, 155);
 $page_og_type = 'website';
 $page_canonical = site_url('about');
@@ -104,6 +126,47 @@ include __DIR__ . '/header.php';
   </section>
 </div>
 
+<section class="about-portfolio">
+  <div class="container">
+    <div class="about-portfolio-head">
+      <h2 class="about-portfolio-title"><?= e($portfolioTitle) ?></h2>
+      <p class="about-portfolio-subtitle"><?= e($portfolioSubtitle) ?></p>
+    </div>
+
+    <?php if ($portfolioItems): ?>
+      <div class="portfolio-grid">
+        <?php foreach ($portfolioItems as $item): ?>
+          <?php
+            $logoUrl = portfolio_logo_url_public($item['image_path'] ?? null);
+            if (!$logoUrl) continue;
+            $link = trim((string)($item['url'] ?? ''));
+            $isExternal = $link !== '' && preg_match('~^https?://~i', $link);
+            $target = $isExternal ? '_blank' : '_self';
+          ?>
+          <?php if ($link !== ''): ?>
+            <a
+              class="portfolio-card"
+              href="<?= e($link) ?>"
+              target="<?= e($target) ?>"
+              <?= $isExternal ? 'rel="noopener"' : '' ?>
+              data-full="<?= e($logoUrl) ?>"
+              data-link="<?= e($link) ?>"
+            >
+              <img src="<?= e($logoUrl) ?>" alt="<?= e($item['title'] ?? '') ?>" loading="lazy">
+            </a>
+          <?php else: ?>
+            <div class="portfolio-card" data-full="<?= e($logoUrl) ?>" data-link="">
+              <img src="<?= e($logoUrl) ?>" alt="<?= e($item['title'] ?? '') ?>" loading="lazy">
+            </div>
+          <?php endif; ?>
+        <?php endforeach; ?>
+      </div>
+    <?php else: ?>
+      <div class="muted">Belum ada portofolio ditampilkan.</div>
+    <?php endif; ?>
+  </div>
+</section>
+
 <script type="application/ld+json">
 <?= json_encode([
   '@context' => 'https://schema.org',
@@ -112,6 +175,61 @@ include __DIR__ . '/header.php';
   'url' => site_url(''),
   'logo' => abs_url(setting('logo_path', 'Assets/logo.png') ?? 'Assets/logo.png'),
 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>
+</script>
+
+<div class="lightbox" id="portfolio-lightbox" hidden>
+  <div class="lb-backdrop" data-close></div>
+  <div class="lb-dialog" role="dialog" aria-modal="true" aria-label="Pratinjau portofolio">
+    <button class="lb-close" type="button" data-close aria-label="Tutup">×</button>
+    <img class="lb-img" id="portfolio-lb-img" src="" alt="Logo portofolio" />
+    <a class="lb-open" id="portfolio-lb-link" href="#" target="_blank" rel="noopener" hidden>Buka link</a>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const items = document.querySelectorAll('.portfolio-card[data-full]');
+    const lb = document.getElementById('portfolio-lightbox');
+    const img = document.getElementById('portfolio-lb-img');
+    const link = document.getElementById('portfolio-lb-link');
+    if (!items.length || !lb || !img || !link) return;
+
+    function openLb(src, href) {
+      img.src = src;
+      if (href) {
+        link.href = href;
+        link.hidden = false;
+      } else {
+        link.hidden = true;
+      }
+      lb.hidden = false;
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLb() {
+      lb.hidden = true;
+      img.src = '';
+      document.body.style.overflow = '';
+    }
+
+    items.forEach((el) => {
+      el.addEventListener('click', function (e) {
+        const src = el.getAttribute('data-full') || '';
+        if (!src) return;
+        e.preventDefault();
+        const href = el.getAttribute('data-link') || '';
+        openLb(src, href);
+      });
+    });
+
+    lb.addEventListener('click', function (e) {
+      if (e.target && e.target.hasAttribute('data-close')) closeLb();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !lb.hidden) closeLb();
+    });
+  })();
 </script>
 
 <?php include __DIR__ . '/footer.php'; ?>

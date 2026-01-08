@@ -29,7 +29,7 @@ function admin_user_id(): int {
 }
 
 function admin_user_role(): string {
-  return $_SESSION['user_role'] ?? 'editor';
+  return $_SESSION['user_role'] ?? 'sales';
 }
 function admin_user_status(): string {
   return $_SESSION['user_status'] ?? 'active';
@@ -44,7 +44,7 @@ function is_admin(): bool {
 }
 
 function is_editor(): bool {
-  return admin_user_role() === 'editor';
+  return in_array(admin_user_role(), ['sales', 'editor'], true);
 }
 function is_frozen(): bool {
   return admin_user_status() === 'frozen';

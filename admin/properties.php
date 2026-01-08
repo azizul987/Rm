@@ -6,6 +6,7 @@ $active = 'properties';
 
 $pdo = db();
 $editorId = admin_user_id();
+$hasViewTracking = db_table_exists('property_views');
 
 // Filter
 $q = trim($_GET['q'] ?? '');
@@ -99,7 +100,11 @@ if ($page > $totalPages) {
   $offset = ($page - 1) * $limit;
 }
 
-$sql = "SELECT p.*, s.name AS sales_name
+$viewSelect = $hasViewTracking
+  ? ", (SELECT COUNT(*) FROM property_views pv WHERE pv.property_id = p.id) AS view_count"
+  : ", 0 AS view_count";
+
+$sql = "SELECT p.*, s.name AS sales_name {$viewSelect}
         {$baseFrom}
         WHERE {$whereSql}
         ORDER BY p.updated_at DESC, p.id DESC
@@ -225,6 +230,9 @@ include __DIR__ . '/_header.php';
                 <th>Harga</th>
                 <th>Status</th>
                 <th>Sales</th>
+                <?php if ($hasViewTracking): ?>
+                  <th>Views</th>
+                <?php endif; ?>
                 <th>Update</th>
                 <th style="text-align:right">Aksi</th>
               </tr>
@@ -242,6 +250,9 @@ include __DIR__ . '/_header.php';
                   <td><strong><?= e(rupiah((int)$p['price'])) ?></strong></td>
                   <td><?= status_badge($p['status']) ?></td>
                   <td><?= e($p['sales_name'] ?? '-') ?></td>
+                  <?php if ($hasViewTracking): ?>
+                    <td><?= (int)($p['view_count'] ?? 0) ?></td>
+                  <?php endif; ?>
                   <td><?= e(fmt_dt($p['updated_at'])) ?></td>
 
                   <td class="td-actions">

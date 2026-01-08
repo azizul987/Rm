@@ -7,6 +7,14 @@ if (!isset($page_title) || trim($page_title) === '') {
   $page_title = 'RM Properti';
 }
 
+if (php_sapi_name() !== 'cli' && db_table_exists('site_visits')) {
+  try {
+    db()->exec("INSERT INTO site_visits () VALUES ()");
+  } catch (Throwable $e) {
+    // Ignore tracking failures
+  }
+}
+
 $siteName = setting('site_name', 'RM Properti') ?? 'RM Properti';
 $tagline  = 'Listing elegan & kontak sales';
 $logoPath = setting('logo_path', null);
@@ -82,7 +90,11 @@ $canonicalUrl = abs_url($page_canonical);
   <meta name="twitter:title" content="<?= e($fullTitle) ?>" />
   <meta name="twitter:description" content="<?= e($page_description) ?>" />
   <meta name="twitter:image" content="<?= e($page_image) ?>" />
-  <link rel="stylesheet" href="<?= e(site_url('css/style.css')) ?>" />
+  <?php
+    $cssPath = __DIR__ . '/css/style.css';
+    $cssVer = is_file($cssPath) ? (string)filemtime($cssPath) : (string)time();
+  ?>
+  <link rel="stylesheet" href="<?= e(site_url('css/style.css?v=' . $cssVer)) ?>" />
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" href="<?= e(site_url('Assets/logo.png')) ?>">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">

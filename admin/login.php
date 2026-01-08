@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     session_regenerate_id(true);
     $_SESSION['user_id'] = (int)$u['id'];
     $_SESSION['user_email'] = $u['email'];
-    $_SESSION['user_role'] = $u['role'] ?? 'editor';
+    $_SESSION['user_role'] = $u['role'] ?? 'sales';
     $_SESSION['user_status'] = $u['status'] ?? 'active';
     header('Location: ' . admin_url('index'));
     exit;

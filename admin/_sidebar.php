@@ -18,7 +18,9 @@ function admin_nav_item(string $href, string $label, string $key, string $active
     <?= admin_nav_item(admin_url('properties'), 'Kelola Properti', 'properties', $active) ?>
     <?php if (is_superadmin() || is_admin()): ?>
       <?= admin_nav_item(admin_url('sales'), 'Kelola Sales', 'sales', $active) ?>
+      <?= admin_nav_item(admin_url('portfolio'), 'Portofolio', 'portfolio', $active) ?>
       <?= admin_nav_item(admin_url('settings'), 'Pengaturan Brand', 'settings_brand', $active) ?>
+      <?= admin_nav_item(admin_url('settings_banners'), 'Pengaturan Banner', 'settings_banners', $active) ?>
       <?= admin_nav_item(admin_url('settings_home'), 'Pengaturan Home', 'settings_home', $active) ?>
       <?= admin_nav_item(admin_url('settings_about'), 'Pengaturan About', 'settings_about', $active) ?>
       <?= admin_nav_item(admin_url('settings_contact'), 'Pengaturan Contact', 'settings_contact', $active) ?>

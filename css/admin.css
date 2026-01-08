@@ -150,10 +150,65 @@ main.main{
   box-shadow: var(--shadow);
   padding: 14px;
 }
+.admin-card-wide{
+  grid-column: 1 / -1;
+  padding: 16px;
+}
 .admin-card h3{ margin: 0 0 6px; font-size: 14px; font-weight: 950; }
 .admin-card p{ margin: 0; color: var(--text-muted); font-size: 13px; }
 .admin-card .kpi{ font-size: 28px; font-weight: 950; margin-top: 10px; color: var(--brand-red); }
 .admin-card .kpi.kpi-blue{ color: var(--brand-blue); }
+
+/* Traffic chart */
+.traffic-chart{
+  margin-top: 10px;
+  background: #F8FAFC;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px;
+}
+.traffic-svg{
+  width: 100%;
+  height: 160px;
+  display: block;
+}
+.traffic-grid{
+  stroke: rgba(0,0,0,0.08);
+  stroke-width: 1;
+}
+.traffic-line{
+  fill: none;
+  stroke-width: 2.5;
+}
+.traffic-line.site{ stroke: var(--brand-blue); }
+.traffic-line.property{ stroke: var(--brand-red); }
+.traffic-legend{
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+.traffic-dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+  margin-right: 6px;
+}
+.traffic-dot.site{ background: var(--brand-blue); }
+.traffic-dot.property{ background: var(--brand-red); }
+.traffic-metrics{
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+.traffic-metrics strong{ color: var(--text-main); }
 
 /* Table */
 .admin-table-wrap{ overflow: auto; border-radius: var(--radius); }

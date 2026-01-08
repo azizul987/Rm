@@ -21,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $typeAllLabel = trim($_POST['home_type_all_label'] ?? '');
   $locationAllLabel = trim($_POST['home_location_all_label'] ?? '');
   $ctaLabel = trim($_POST['home_cta_label'] ?? '');
+  $bannerInterval = (int)($_POST['home_banner_interval'] ?? 5000);
 
   if ($heroTitle === '') {
     $error = 'Judul hero wajib diisi.';
@@ -32,6 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     set_setting('home_type_all_label', $typeAllLabel);
     set_setting('home_location_all_label', $locationAllLabel);
     set_setting('home_cta_label', $ctaLabel);
+    if ($bannerInterval < 2000) $bannerInterval = 2000;
+    if ($bannerInterval > 20000) $bannerInterval = 20000;
+    set_setting('home_banner_interval', (string)$bannerInterval);
 
     $success = 'Pengaturan Home berhasil disimpan.';
   }
@@ -44,6 +48,7 @@ $curSearch = setting('home_search_placeholder', 'Cari wilayah / nama property...
 $curTypeAll = setting('home_type_all_label', 'Semua Tipe') ?? 'Semua Tipe';
 $curLocAll = setting('home_location_all_label', 'Semua Lokasi') ?? 'Semua Lokasi';
 $curCta = setting('home_cta_label', 'Temukan Properti') ?? 'Temukan Properti';
+$curBannerInterval = (int)(setting('home_banner_interval', '5000') ?? 5000);
 
 include __DIR__ . '/_header.php';
 ?>
@@ -101,6 +106,12 @@ include __DIR__ . '/_header.php';
             <label class="form-label">Label Tombol CTA</label>
             <input class="input" name="home_cta_label" value="<?= e($curCta) ?>">
           </div>
+        </div>
+
+        <div class="form-field" style="margin-top:12px">
+          <label class="form-label">Interval Banner (ms)</label>
+          <input class="input" type="number" name="home_banner_interval" min="2000" max="20000" step="500" value="<?= (int)$curBannerInterval ?>">
+          <div class="form-help muted">Minimal 2000ms, maksimal 20000ms.</div>
         </div>
 
         <div class="admin-grid admin-grid-2" style="margin-top:12px">

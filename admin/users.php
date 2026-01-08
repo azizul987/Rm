@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $role = trim($_POST['role'] ?? '');
     $password = (string)($_POST['password'] ?? '');
 
-    $allowedRoles = is_superadmin() ? ['admin', 'editor'] : ['editor'];
+    $allowedRoles = is_superadmin() ? ['admin', 'sales'] : ['sales'];
     if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
       $error = 'Email tidak valid.';
     } elseif (!in_array($role, $allowedRoles, true)) {
@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
   }
 
-  if ($action === 'update_editor') {
+  if ($action === 'update_sales') {
     $id = (int)($_POST['id'] ?? 0);
     $status = trim($_POST['status'] ?? 'active');
     $creditLimit = (int)($_POST['credit_limit'] ?? 0);
@@ -87,12 +87,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $st = $pdo->prepare("SELECT role FROM users WHERE id=?");
       $st->execute([$id]);
       $row = $st->fetch();
-      if (!$row || ($row['role'] ?? '') !== 'editor') {
-        $error = 'Hanya editor yang bisa diubah status/kredit.';
+      if (!$row || !in_array(($row['role'] ?? ''), ['sales', 'editor'], true)) {
+        $error = 'Hanya sales yang bisa diubah status/kredit.';
       } else {
         $pdo->prepare("UPDATE users SET status=?, credit_limit=? WHERE id=?")
             ->execute([$status, $creditLimit, $id]);
-        $success = 'Status/kredit editor berhasil disimpan.';
+        $success = 'Status/kredit sales berhasil disimpan.';
       }
     }
   }
@@ -111,7 +111,7 @@ include __DIR__ . '/_header.php';
     <div class="admin-pagehead admin-pagehead-spaced">
       <div>
         <h1 class="admin-title">Manajemen Admin</h1>
-        <p class="muted">Kelola akun admin dan editor.</p>
+        <p class="muted">Kelola akun admin dan sales.</p>
       </div>
     </div>
 
@@ -137,7 +137,7 @@ include __DIR__ . '/_header.php';
             <?php if (is_superadmin()): ?>
               <option value="admin">admin</option>
             <?php endif; ?>
-            <option value="editor">editor</option>
+            <option value="sales">sales</option>
           </select>
         </div>
         <div class="field">
@@ -180,26 +180,26 @@ include __DIR__ . '/_header.php';
                 $limit = (int)($u['credit_limit'] ?? 0);
                 $used = (int)($u['credit_used'] ?? 0);
                 $remain = max(0, $limit - $used);
-                $isEditorRow = (($u['role'] ?? '') === 'editor');
+                $isSalesRow = in_array(($u['role'] ?? ''), ['sales', 'editor'], true);
               ?>
               <tr>
                 <td><?= e($u['email']) ?></td>
                 <td><?= e($u['role']) ?></td>
                 <td><?= e($u['status'] ?? 'active') ?></td>
-                <td><?= $isEditorRow ? e($limit) : '-' ?></td>
-                <td><?= $isEditorRow ? e($used) : '-' ?></td>
-                <td><?= $isEditorRow ? e($remain) : '-' ?></td>
+                <td><?= $isSalesRow ? e($limit) : '-' ?></td>
+                <td><?= $isSalesRow ? e($used) : '-' ?></td>
+                <td><?= $isSalesRow ? e($remain) : '-' ?></td>
                 <td><?= e($u['created_at']) ?></td>
                 <td class="td-actions">
                   <div class="admin-actions-cell">
-                    <?php if (($u['role'] ?? '') === 'editor'): ?>
-                      <a class="action" href="editor_access?id=<?= (int)$u['id'] ?>">Akses Editor</a>
+                    <?php if (in_array(($u['role'] ?? ''), ['sales', 'editor'], true)): ?>
+                      <a class="action" href="editor_access?id=<?= (int)$u['id'] ?>">Akses Sales</a>
 
                       <form method="post" action="users" class="admin-inline">
                         <input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>">
-                        <input type="hidden" name="action" value="update_editor">
+                        <input type="hidden" name="action" value="update_sales">
                         <input type="hidden" name="id" value="<?= (int)$u['id'] ?>">
-                        <select class="select" name="status" title="Status editor">
+                        <select class="select" name="status" title="Status sales">
                           <option value="active" <?= ($u['status'] ?? 'active')==='active'?'selected':'' ?>>active</option>
                           <option value="frozen" <?= ($u['status'] ?? '')==='frozen'?'selected':'' ?>>frozen</option>
                         </select>

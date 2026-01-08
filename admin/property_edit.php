@@ -31,7 +31,7 @@ if ($id) {
     }
   }
 } elseif (is_editor()) {
-  $st = $pdo->prepare("SELECT credit_limit, credit_used FROM users WHERE id=? AND role='editor' LIMIT 1");
+  $st = $pdo->prepare("SELECT credit_limit, credit_used FROM users WHERE id=? AND role IN ('sales','editor') LIMIT 1");
   $st->execute([$editorId]);
   $editorCredit = $st->fetch();
   if (!$editorCredit) {
@@ -40,7 +40,7 @@ if ($id) {
   }
   if ((int)$editorCredit['credit_used'] >= (int)$editorCredit['credit_limit']) {
     http_response_code(403);
-    exit('Kredit editor sudah habis.');
+    exit('Kredit sales sudah habis.');
   }
 }
 
@@ -93,6 +93,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $land = (int)($_POST['land'] ?? 0);
   $building = (int)($_POST['building'] ?? 0);
   $desc = trim($_POST['description'] ?? '');
+  $listingType = trim($_POST['listing_type'] ?? 'primary');
+  $allowedListing = ['primary', 'secondary', 'kavling', 'takeover', 'sewa'];
+  if (!in_array($listingType, $allowedListing, true)) {
+    $listingType = 'primary';
+  }
   $featuresJson = features_to_json($_POST['features'] ?? '');
   $videosJson = videos_to_json($_POST['videos'] ?? '');
   $status = trim($_POST['status'] ?? 'active');
@@ -101,31 +106,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (!$error && ($title === '' || $type === '' || $location === '')) {
     $error = 'Judul, tipe, dan lokasi wajib diisi.';
   } elseif (!$error && is_editor() && $salesId !== null && !in_array($salesId, $allowedSalesIds, true)) {
-    $error = 'Sales tidak diizinkan untuk editor ini.';
+    $error = 'Sales tidak diizinkan untuk akun ini.';
   } else {
     if ($id) {
-      $st = $pdo->prepare("UPDATE properties SET title=?, type=?, price=?, location=?, beds=?, baths=?, land=?, building=?, description=?, features_json=?, videos_json=?, status=?, sales_id=? WHERE id=?");
-      $st->execute([$title,$type,$price,$location,$beds,$baths,$land,$building,$desc,$featuresJson,$videosJson,$status,$salesId,$id]);
+      $st = $pdo->prepare("UPDATE properties SET title=?, type=?, listing_type=?, price=?, location=?, beds=?, baths=?, land=?, building=?, description=?, features_json=?, videos_json=?, status=?, sales_id=? WHERE id=?");
+      $st->execute([$title,$type,$listingType,$price,$location,$beds,$baths,$land,$building,$desc,$featuresJson,$videosJson,$status,$salesId,$id]);
     } else {
       if (is_editor()) {
         if ($editorCredit === null) {
-          $st = $pdo->prepare("SELECT credit_limit, credit_used FROM users WHERE id=? AND role='editor' LIMIT 1");
+          $st = $pdo->prepare("SELECT credit_limit, credit_used FROM users WHERE id=? AND role IN ('sales','editor') LIMIT 1");
           $st->execute([$editorId]);
           $editorCredit = $st->fetch();
         }
         if (!$editorCredit || (int)$editorCredit['credit_used'] >= (int)$editorCredit['credit_limit']) {
-          $error = 'Kredit editor sudah habis.';
+          $error = 'Kredit sales sudah habis.';
         }
       }
 
       if (!$error) {
         if (is_editor()) {
-          $st = $pdo->prepare("INSERT INTO properties (title,type,price,location,beds,baths,land,building,description,features_json,videos_json,status,sales_id,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-          $st->execute([$title,$type,$price,$location,$beds,$baths,$land,$building,$desc,$featuresJson,$videosJson,$status,$salesId,$editorId]);
+          $st = $pdo->prepare("INSERT INTO properties (title,type,listing_type,price,location,beds,baths,land,building,description,features_json,videos_json,status,sales_id,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+          $st->execute([$title,$type,$listingType,$price,$location,$beds,$baths,$land,$building,$desc,$featuresJson,$videosJson,$status,$salesId,$editorId]);
           $pdo->prepare("UPDATE users SET credit_used = credit_used + 1 WHERE id=?")->execute([$editorId]);
         } else {
-          $st = $pdo->prepare("INSERT INTO properties (title,type,price,location,beds,baths,land,building,description,features_json,videos_json,status,sales_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
-          $st->execute([$title,$type,$price,$location,$beds,$baths,$land,$building,$desc,$featuresJson,$videosJson,$status,$salesId]);
+          $st = $pdo->prepare("INSERT INTO properties (title,type,listing_type,price,location,beds,baths,land,building,description,features_json,videos_json,status,sales_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+          $st->execute([$title,$type,$listingType,$price,$location,$beds,$baths,$land,$building,$desc,$featuresJson,$videosJson,$status,$salesId]);
         }
         $id = (int)$pdo->lastInsertId();
       }
@@ -242,6 +247,18 @@ include __DIR__ . '/_header.php';
             </div>
 
             <div class="field">
+              <label class="label" for="listing_type">Kategori Listing</label>
+              <?php $lt = (string)($p['listing_type'] ?? 'primary'); ?>
+              <select id="listing_type" class="select" name="listing_type">
+                <option value="primary" <?= $lt==='primary'?'selected':'' ?>>Dijual Primary</option>
+                <option value="secondary" <?= $lt==='secondary'?'selected':'' ?>>Dijual Secondary</option>
+                <option value="kavling" <?= $lt==='kavling'?'selected':'' ?>>Kavling Tanah</option>
+                <option value="takeover" <?= $lt==='takeover'?'selected':'' ?>>Take Over Rumah</option>
+                <option value="sewa" <?= $lt==='sewa'?'selected':'' ?>>Disewakan</option>
+              </select>
+            </div>
+
+            <div class="field">
               <label class="label" for="type">Tipe</label>
               <input id="type" class="input" name="type" placeholder="Rumah / Ruko / Tanah" value="<?= $val('type') ?>" required>
             </div>
@@ -273,12 +290,12 @@ include __DIR__ . '/_header.php';
           </div>
 
           <div class="admin-grid admin-grid-4" style="margin-top:12px">
-            <div class="field">
+            <div class="field" data-kavling-hide="true">
               <label class="label" for="beds">KT</label>
               <input id="beds" class="input" type="number" name="beds" value="<?= $val('beds','0') ?>">
             </div>
 
-            <div class="field">
+            <div class="field" data-kavling-hide="true">
               <label class="label" for="baths">KM</label>
               <input id="baths" class="input" type="number" name="baths" value="<?= $val('baths','0') ?>">
             </div>
@@ -288,7 +305,7 @@ include __DIR__ . '/_header.php';
               <input id="land" class="input" type="number" name="land" value="<?= $val('land','0') ?>">
             </div>
 
-            <div class="field">
+            <div class="field" data-kavling-hide="true">
               <label class="label" for="building">Luas Bangunan (m²)</label>
               <input id="building" class="input" type="number" name="building" value="<?= $val('building','0') ?>">
             </div>
@@ -372,6 +389,7 @@ include __DIR__ . '/_header.php';
               <hr class="line" />
 
               <div class="img-grid">
+                <input type="hidden" name="property_id" value="<?= (int)$id ?>">
                 <?php foreach ($imgs as $im): ?>
                   <div class="img-item">
                     <?php $imgPath = admin_public_path((string)$im['path']); ?>
@@ -389,12 +407,15 @@ include __DIR__ . '/_header.php';
                         ID <?= (int)$im['id'] ?>
                       </div>
 
-                      <form method="post" action="property_image_delete" class="admin-inline" style="margin:0">
-                        <input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>">
-                        <input type="hidden" name="id" value="<?= (int)$im['id'] ?>">
-                        <input type="hidden" name="property_id" value="<?= (int)$id ?>">
-                        <button class="action danger" type="submit">Hapus</button>
-                      </form>
+                      <button
+                        class="action danger"
+                        type="submit"
+                        formmethod="post"
+                        formaction="property_image_delete"
+                        formnovalidate
+                        name="id"
+                        value="<?= (int)$im['id'] ?>"
+                      >Hapus</button>
                     </div>
                   </div>
                 <?php endforeach; ?>
@@ -411,6 +432,24 @@ include __DIR__ . '/_header.php';
 </div>
 
 <?php include __DIR__ . '/_footer.php'; ?>
+
+<script>
+(function () {
+  const listing = document.getElementById('listing_type');
+  if (!listing) return;
+  const kavlingFields = Array.from(document.querySelectorAll('[data-kavling-hide="true"]'));
+
+  function toggleKavling() {
+    const isKavling = listing.value === 'kavling';
+    kavlingFields.forEach((el) => {
+      el.style.display = isKavling ? 'none' : '';
+    });
+  }
+
+  listing.addEventListener('change', toggleKavling);
+  toggleKavling();
+})();
+</script>
 
 <script>
 (function () {

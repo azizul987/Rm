@@ -246,6 +246,35 @@ function set_setting(string $key, ?string $value): void {
                        ON DUPLICATE KEY UPDATE `value`=VALUES(`value`)");
   $st->execute([$key, $value]);
 }
+
+function db_table_exists(string $table): bool {
+  static $cache = [];
+  if (array_key_exists($table, $cache)) return $cache[$table];
+
+  $exists = false;
+  try {
+    $st = db()->prepare("
+      SELECT 1
+      FROM information_schema.tables
+      WHERE table_schema = DATABASE()
+        AND table_name = ?
+      LIMIT 1
+    ");
+    $st->execute([$table]);
+    $exists = (bool)$st->fetchColumn();
+  } catch (Throwable $e) {
+    // Fallback for hosts that block information_schema access.
+    try {
+      $st = db()->prepare("SHOW TABLES LIKE ?");
+      $st->execute([$table]);
+      $exists = (bool)$st->fetchColumn();
+    } catch (Throwable $e2) {
+      $exists = false;
+    }
+  }
+  $cache[$table] = $exists;
+  return $exists;
+}
 // Alias untuk kompatibilitas kode lama
 function get_int_param(string $k, int $d = 0): int {
   return function_exists('get_int') ? get_int($k, $d) : $d;

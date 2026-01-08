@@ -2,22 +2,22 @@
 require __DIR__ . '/_guard.php';
 require_role(['superadmin', 'admin']);
 
-$admin_title = 'Akses Editor';
+$admin_title = 'Akses Sales';
 $active = 'users';
 
 $pdo = db();
 $editorId = (int)($_GET['id'] ?? 0);
 if ($editorId <= 0) {
   http_response_code(404);
-  exit('Editor tidak ditemukan.');
+  exit('Sales tidak ditemukan.');
 }
 
 $st = $pdo->prepare("SELECT id, email, role FROM users WHERE id=? LIMIT 1");
 $st->execute([$editorId]);
 $editor = $st->fetch();
-if (!$editor || ($editor['role'] ?? '') !== 'editor') {
+if (!$editor || !in_array(($editor['role'] ?? ''), ['sales', 'editor'], true)) {
   http_response_code(404);
-  exit('Editor tidak ditemukan.');
+  exit('Sales tidak ditemukan.');
 }
 
 $formAction = 'editor_access?id=' . $editorId;
@@ -50,10 +50,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $pdo->commit();
-    $success = 'Akses editor berhasil disimpan.';
+    $success = 'Akses sales berhasil disimpan.';
   } catch (Throwable $e) {
     $pdo->rollBack();
-    $error = 'Gagal menyimpan akses editor.';
+    $error = 'Gagal menyimpan akses sales.';
   }
 }
 
@@ -77,8 +77,8 @@ include __DIR__ . '/_header.php';
   <section class="admin-content">
     <div class="admin-pagehead admin-pagehead-spaced">
       <div>
-        <h1 class="admin-title">Akses Editor</h1>
-        <p class="muted">Atur sales dan properti yang boleh diakses oleh editor.</p>
+        <h1 class="admin-title">Akses Sales</h1>
+        <p class="muted">Atur sales dan properti yang boleh diakses oleh akun sales.</p>
       </div>
       <div class="admin-quick">
         <a class="action" href="users">← Kembali</a>
@@ -94,7 +94,7 @@ include __DIR__ . '/_header.php';
       <?php endif; ?>
 
       <div class="muted" style="margin-bottom:10px">
-        Editor: <strong><?= e($editor['email']) ?></strong>
+        Sales: <strong><?= e($editor['email']) ?></strong>
       </div>
 
       <form method="post" action="<?= e($formAction) ?>">
@@ -104,7 +104,7 @@ include __DIR__ . '/_header.php';
           <div class="panel" style="box-shadow:none">
             <div class="form-field">
               <label class="form-label">Sales yang diizinkan</label>
-              <div class="muted" style="font-size:12px;margin-bottom:8px">Editor hanya bisa memilih sales ini saat membuat/ubah properti.</div>
+              <div class="muted" style="font-size:12px;margin-bottom:8px">Akun sales hanya bisa memilih sales ini saat membuat/ubah properti.</div>
               <div style="display:grid;gap:6px;max-height:320px;overflow:auto;padding:4px 2px">
                 <?php foreach ($sales as $s): ?>
                   <label style="display:flex;gap:8px;align-items:center">
@@ -119,7 +119,7 @@ include __DIR__ . '/_header.php';
           <div class="panel" style="box-shadow:none">
             <div class="form-field">
               <label class="form-label">Properti yang diizinkan</label>
-              <div class="muted" style="font-size:12px;margin-bottom:8px">Editor hanya bisa mengedit properti yang dicentang.</div>
+              <div class="muted" style="font-size:12px;margin-bottom:8px">Akun sales hanya bisa mengedit properti yang dicentang.</div>
               <div style="display:grid;gap:6px;max-height:320px;overflow:auto;padding:4px 2px">
                 <?php foreach ($props as $p): ?>
                   <label style="display:flex;gap:8px;align-items:center">

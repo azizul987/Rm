@@ -27,6 +27,7 @@ CREATE TABLE `properties` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `title` varchar(220) NOT NULL,
   `type` varchar(80) NOT NULL,
+  `listing_type` varchar(40) NOT NULL DEFAULT 'primary',
   `price` bigint(20) NOT NULL DEFAULT 0,
   `location` varchar(120) NOT NULL,
   `beds` int(11) NOT NULL DEFAULT 0,
@@ -59,10 +60,10 @@ CREATE TABLE `properties` (
 LOCK TABLES `properties` WRITE;
 /*!40000 ALTER TABLE `properties` DISABLE KEYS */;
 INSERT INTO `properties` VALUES
-(1,'Rumah Minimalis 3KT Dekat Kampus','Rumah',850000000,'Palembang',3,2,120,90,'Rumah siap huni dengan akses jalan lebar. Dekat minimarket dan kampus.','[\"Carport\",\"Dapur luas\",\"Air PDAM\",\"Listrik 2200W\"]',NULL,'active',1,NULL,'2026-01-03 00:56:22','2026-01-03 05:45:08'),
-(2,'Ruko 2 Lantai Pinggir Jalan Utama','Ruko',1350000000,'Palembang',2,2,90,150,'Lokasi strategis dengan traffic tinggi. Cocok untuk usaha retail/office.','[\"Balkon\",\"Parkir luas\",\"CCTV area\",\"Dekat pusat kuliner\"]',NULL,'active',2,NULL,'2026-01-03 00:56:22','2026-01-03 02:50:02'),
-(3,'Tanah Kavling SHM Siap Bangun','Tanah hitam',420000000,'Tangerang',0,0,100,0,'Kavling matang, SHM, akses mudah ke tol. Lingkungan berkembang.','[\"SHM\",\"Akses tol\",\"Jalan cor\",\"Kawasan berkembang\"]',NULL,'sold',2,NULL,'2026-01-03 00:56:22','2026-01-03 02:44:44'),
-(5,'sasa','sasa',0,'sas',0,0,0,0,'',NULL,NULL,'draft',NULL,NULL,'2026-01-03 02:31:55','2026-01-03 02:44:30');
+(1,'Rumah Minimalis 3KT Dekat Kampus','Rumah','primary',850000000,'Palembang',3,2,120,90,'Rumah siap huni dengan akses jalan lebar. Dekat minimarket dan kampus.','[\"Carport\",\"Dapur luas\",\"Air PDAM\",\"Listrik 2200W\"]',NULL,'active',1,NULL,'2026-01-03 00:56:22','2026-01-03 05:45:08'),
+(2,'Ruko 2 Lantai Pinggir Jalan Utama','Ruko','primary',1350000000,'Palembang',2,2,90,150,'Lokasi strategis dengan traffic tinggi. Cocok untuk usaha retail/office.','[\"Balkon\",\"Parkir luas\",\"CCTV area\",\"Dekat pusat kuliner\"]',NULL,'active',2,NULL,'2026-01-03 00:56:22','2026-01-03 02:50:02'),
+(3,'Tanah Kavling SHM Siap Bangun','Tanah hitam','kavling',420000000,'Tangerang',0,0,100,0,'Kavling matang, SHM, akses mudah ke tol. Lingkungan berkembang.','[\"SHM\",\"Akses tol\",\"Jalan cor\",\"Kawasan berkembang\"]',NULL,'sold',2,NULL,'2026-01-03 00:56:22','2026-01-03 02:44:44'),
+(5,'sasa','sasa','primary',0,'sas',0,0,0,0,'',NULL,NULL,'draft',NULL,NULL,'2026-01-03 02:31:55','2026-01-03 02:44:30');
 /*!40000 ALTER TABLE `properties` ENABLE KEYS */;
 UNLOCK TABLES;
 

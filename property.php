@@ -2,15 +2,15 @@
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/lib.php';
 
-$id = (int)($_GET['id'] ?? 0);
-if ($id <= 0) {
+$propertyId = (int)($_GET['id'] ?? 0);
+if ($propertyId <= 0) {
   http_response_code(404);
   exit('Properti tidak ditemukan.');
 }
 
 $pdo = db();
 
-// Ambil properti + sales
+// Ambil properti + sales + creator
 $st = $pdo->prepare("
   SELECT p.*,
          s.name AS sales_name,
@@ -28,7 +28,7 @@ $st = $pdo->prepare("
   WHERE p.id = ?
   LIMIT 1
 ");
-$st->execute([$id]);
+$st->execute([$propertyId]);
 $p = $st->fetch();
 
 if (!$p) {
@@ -41,10 +41,27 @@ if (($p['status'] ?? '') !== 'active') {
   http_response_code(404);
   exit('Properti tidak tersedia.');
 }
+
 // Sembunyikan jika dibuat editor yang dibekukan
 if (($p['creator_role'] ?? '') === 'editor' && ($p['creator_status'] ?? '') === 'frozen') {
   http_response_code(404);
   exit('Properti tidak tersedia.');
+}
+
+$viewCount = 0;
+$hasViewTracking = false;
+if (db_table_exists('property_views')) {
+  $hasViewTracking = true;
+  try {
+    $ins = $pdo->prepare("INSERT INTO property_views (property_id) VALUES (?)");
+    $ins->execute([$propertyId]);
+
+    $st = $pdo->prepare("SELECT COUNT(*) FROM property_views WHERE property_id=?");
+    $st->execute([$propertyId]);
+    $viewCount = (int)$st->fetchColumn();
+  } catch (Throwable $e) {
+    $viewCount = 0;
+  }
 }
 
 // Ambil gambar (cover + gallery)
@@ -54,10 +71,10 @@ $st = $pdo->prepare("
   WHERE property_id=?
   ORDER BY sort_order ASC, id ASC
 ");
-$st->execute([$id]);
+$st->execute([$propertyId]);
 $imgs = $st->fetchAll();
 
-// Kumpulkan path gambar (cover + gallery)
+// Kumpulkan path gambar
 $images = [];
 foreach ($imgs as $row) {
   if (!empty($row['path'])) $images[] = $row['path'];
@@ -72,6 +89,7 @@ if (!empty($p['features_json'])) {
   if (is_array($tmp)) $features = $tmp;
 }
 
+// Videos
 $videos = [];
 if (!empty($p['videos_json'])) {
   $tmp = json_decode($p['videos_json'], true);
@@ -82,18 +100,20 @@ $videoItems = [];
 foreach ($videos as $v) {
   $raw = trim((string)$v);
   if ($raw === '') continue;
-  $id = youtube_id($raw);
-  if (!$id && preg_match('/^[A-Za-z0-9_-]{11}$/', $raw)) $id = $raw;
-  if (!$id) continue;
+
+  $videoId = youtube_id($raw);
+  if (!$videoId && preg_match('/^[A-Za-z0-9_-]{11}$/', $raw)) $videoId = $raw;
+  if (!$videoId) continue;
 
   $videoItems[] = [
     'type' => 'video',
-    'id' => $id,
-    'thumb' => 'https://img.youtube.com/vi/' . $id . '/hqdefault.jpg',
-    'embed' => 'https://www.youtube.com/embed/' . $id,
+    'id' => $videoId,
+    'thumb' => 'https://img.youtube.com/vi/' . $videoId . '/hqdefault.jpg',
+    'embed' => 'https://www.youtube.com/embed/' . $videoId,
   ];
 }
 
+// Build mediaItems: images dulu lalu video
 $mediaItems = [];
 foreach ($images as $src) {
   if ($src && !str_starts_with($src, 'data:')) {
@@ -107,14 +127,37 @@ foreach ($images as $src) {
 foreach ($videoItems as $v) {
   $mediaItems[] = $v;
 }
+
 $mediaCount = count($mediaItems);
 $firstMedia = $mediaItems[0] ?? null;
+
+// Initial media thumbnail
 $initialImg = $firstImg;
 if ($initialImg && !str_starts_with($initialImg, 'data:')) {
   $initialImg = abs_url($initialImg);
 }
-if (!$initialImg && $firstMedia && $firstMedia['type'] === 'video') {
+if (!$initialImg && $firstMedia && ($firstMedia['type'] ?? '') === 'video') {
   $initialImg = $firstMedia['thumb'];
+}
+
+// Resolve sales photo URL (optional)
+$salesPhotoUrl = null;
+if (!empty($p['sales_photo'])) {
+  $sp = (string)$p['sales_photo'];
+
+  if (!str_starts_with($sp, 'data:')) {
+    // kalau bukan URL absolute dan bukan path root
+    if (!preg_match('~^https?://~i', $sp) && !str_starts_with($sp, '/')) {
+      $local = __DIR__ . '/' . ltrim($sp, '/');
+      if (file_exists($local)) {
+        $sp = abs_url($sp);
+      } else {
+        $sp = null;
+      }
+    }
+  }
+
+  $salesPhotoUrl = $sp ?: null;
 }
 
 // helper WA (lebih “pasti”)
@@ -135,8 +178,12 @@ function wa_link(?string $wa, ?string $text = null): ?string {
   return $url;
 }
 
+// Meta
 $page_title = $p['title'] ?? 'Detail Properti';
+$listingType = (string)($p['listing_type'] ?? '');
+$isKavling = ($listingType === 'kavling');
 $slug = slugify((string)($p['title'] ?? 'properti'));
+
 $descSource = (string)($p['description'] ?? '');
 if ($descSource === '' && !empty($features)) {
   $descSource = implode(', ', array_map('strval', $features));
@@ -144,12 +191,18 @@ if ($descSource === '' && !empty($features)) {
 if ($descSource === '') {
   $descSource = ($p['title'] ?? 'Properti') . ' di ' . ($p['location'] ?? '');
 }
+
 $page_description = str_excerpt($descSource, 155);
 $page_og_type = 'product';
-$page_canonical = 'property/' . $id . '/' . $slug;
+
+// canonical relative, disesuaikan dengan struktur routing kamu
+$page_canonical = 'property/' . $propertyId . '/' . $slug;
+
+// og:image
 if (!empty($firstImg) && !str_starts_with($firstImg, 'data:')) {
   $page_image = abs_url($firstImg);
 }
+
 include __DIR__ . '/header.php';
 
 // pesan WA default
@@ -158,36 +211,7 @@ $waText = "Halo, saya tertarik dengan properti: " . ($p['title'] ?? '') . " (" .
 
 <section class="panel property-detail">
 
-  <!-- Header info -->
-  <div class="property-head">
-    <div class="property-head-left">
-      <h1 class="property-title"><?= e($p['title']) ?></h1>
-
-      <div class="property-meta muted">
-        <span><?= e($p['type']) ?></span>
-        <span class="dot">•</span>
-        <span><?= e($p['location']) ?></span>
-        <span class="dot">•</span>
-        <span><?= (int)$p['beds'] ?> KT / <?= (int)$p['baths'] ?> KM</span>
-      </div>
-    </div>
-
-    <div class="property-head-right">
-      <div class="property-price">
-        <span class="property-price-label">Harga</span>
-        <span class="property-price-value"><?= e(rupiah((int)$p['price'])) ?></span>
-      </div>
-      <div class="property-size">
-        <span class="property-size-item">LT <?= (int)$p['land'] ?> m²</span>
-        <span class="dot">•</span>
-        <span class="property-size-item">LB <?= (int)$p['building'] ?> m²</span>
-      </div>
-    </div>
-  </div>
-
-  <hr class="line" />
-
-  <!-- MEDIA CAROUSEL -->
+  <!-- MEDIA CAROUSEL (DI ATAS) -->
   <?php if ($mediaCount > 0): ?>
     <div class="property-media">
 
@@ -211,8 +235,8 @@ $waText = "Halo, saya tertarik dengan properti: " . ($p['title'] ?? '') . " (" .
         </div>
 
         <?php if ($mediaCount > 1): ?>
-          <button class="mc-arrow prev" type="button" aria-label="Foto sebelumnya">‹</button>
-          <button class="mc-arrow next" type="button" aria-label="Foto berikutnya">›</button>
+          <button class="mc-arrow prev" type="button" aria-label="Media sebelumnya">‹</button>
+          <button class="mc-arrow next" type="button" aria-label="Media berikutnya">›</button>
         <?php endif; ?>
 
         <button class="mc-full" type="button" aria-label="Lihat foto ukuran penuh">Lihat penuh</button>
@@ -222,23 +246,34 @@ $waText = "Halo, saya tertarik dengan properti: " . ($p['title'] ?? '') . " (" .
         </div>
       </div>
 
+      <div class="mc-menu">
+        <button class="mc-menu-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Menu media">⋯</button>
+        <div class="mc-menu-panel" role="menu" aria-hidden="true">
+          <button class="mc-menu-item" type="button" data-share aria-label="Bagikan">
+            <svg class="mc-menu-icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M18 16a3 3 0 0 0-2.4 1.2l-6.7-3.4a3 3 0 0 0 0-3.6l6.7-3.4A3 3 0 1 0 14 5a3 3 0 0 0 .1.7L7.4 9.1A3 3 0 1 0 7 15a3 3 0 0 0 .4-.1l6.7 3.4A3 3 0 1 0 18 16Z" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
       <?php if ($mediaCount > 1): ?>
-        <div class="mc-thumbs" aria-label="Thumbnail foto">
+        <div class="mc-thumbs" aria-label="Thumbnail media">
           <?php foreach ($mediaItems as $i => $item): ?>
             <button
               type="button"
               class="mc-thumb <?= $i === 0 ? 'is-active' : '' ?> <?= ($item['type'] ?? '') === 'video' ? 'is-video' : '' ?>"
               data-index="<?= (int)$i ?>"
-              data-type="<?= e($item['type']) ?>"
+              data-type="<?= e($item['type'] ?? 'image') ?>"
               <?php if (($item['type'] ?? '') === 'video'): ?>
-                data-video="<?= e($item['id']) ?>"
+                data-video="<?= e($item['id'] ?? '') ?>"
               <?php else: ?>
-                data-src="<?= e($item['src']) ?>"
+                data-src="<?= e($item['src'] ?? '') ?>"
               <?php endif; ?>
               aria-label="<?= ($item['type'] ?? '') === 'video' ? 'Lihat video' : 'Lihat foto ' . (int)($i + 1) ?>"
             >
               <img
-                src="<?= e(($item['type'] ?? '') === 'video' ? $item['thumb'] : $item['src']) ?>"
+                src="<?= e(($item['type'] ?? '') === 'video' ? ($item['thumb'] ?? '') : ($item['src'] ?? '')) ?>"
                 alt="<?= ($item['type'] ?? '') === 'video' ? 'Thumbnail video' : 'Thumbnail ' . (int)($i + 1) ?>"
                 loading="lazy"
               />
@@ -264,8 +299,64 @@ $waText = "Halo, saya tertarik dengan properti: " . ($p['title'] ?? '') . " (" .
         </div>
       </div>
 
+      <div class="mc-modal" id="share-modal" hidden>
+        <div class="mc-modal-backdrop" data-close></div>
+        <div class="mc-modal-dialog panel" role="dialog" aria-modal="true" aria-label="Link disalin">
+          <div class="mc-modal-title">Link disalin</div>
+          <div class="mc-modal-text">Tautan berhasil disalin ke clipboard.</div>
+          <div class="mc-modal-actions">
+            <button class="action accent mc-modal-close" type="button" data-close>Tutup</button>
+          </div>
+        </div>
+      </div>
+
     </div>
   <?php endif; ?>
+
+  <!-- HEADER INFO (DI BAWAH CAROUSEL) -->
+  <div class="property-head">
+    <div class="property-head-left">
+      <h1 class="property-title"><?= e($p['title']) ?></h1>
+
+      <div class="property-meta muted">
+        <span><?= e($p['type'] ?? '') ?></span>
+        <span class="dot">•</span>
+        <span><?= e($p['location'] ?? '') ?></span>
+        <span class="dot">•</span>
+        <?php if ($isKavling): ?>
+          <span>Luas Tanah <?= (int)($p['land'] ?? 0) ?> m²</span>
+        <?php else: ?>
+          <span><?= (int)($p['beds'] ?? 0) ?> KT / <?= (int)($p['baths'] ?? 0) ?> KM</span>
+        <?php endif; ?>
+        <?php if ($hasViewTracking): ?>
+          <span class="dot">•</span>
+          <span class="meta-icon">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <?= (int)$viewCount ?>
+          </span>
+        <?php endif; ?>
+      </div>
+    </div>
+
+    <div class="property-head-right">
+      <div class="property-price">
+        <span class="property-price-label">Harga</span>
+        <span class="property-price-value"><?= e(rupiah((int)($p['price'] ?? 0))) ?></span>
+      </div>
+      <div class="property-size">
+        <span class="property-size-item">Luas Tanah <?= (int)($p['land'] ?? 0) ?> m²</span>
+        <?php if (!$isKavling): ?>
+          <span class="dot">•</span>
+          <span class="property-size-item">LB <?= (int)($p['building'] ?? 0) ?> m²</span>
+        <?php endif; ?>
+      </div>
+    </div>
+  </div>
+
+  <hr class="line" />
 
   <div class="property-body">
 
@@ -278,7 +369,7 @@ $waText = "Halo, saya tertarik dengan properti: " . ($p['title'] ?? '') . " (" .
         </div>
       <?php endif; ?>
 
-      <?php if ($features): ?>
+      <?php if (!empty($features)): ?>
         <div class="property-section">
           <h2 class="property-section-title">Fitur</h2>
           <ul class="list property-features">
@@ -297,8 +388,8 @@ $waText = "Halo, saya tertarik dengan properti: " . ($p['title'] ?? '') . " (" .
 
         <?php if (!empty($p['sales_name'])): ?>
           <div class="sales-head">
-            <?php if (!empty($p['sales_photo'])): ?>
-              <img class="sales-photo" src="<?= e($p['sales_photo']) ?>" alt="<?= e($p['sales_name']) ?>" loading="lazy" />
+            <?php if (!empty($salesPhotoUrl)): ?>
+              <img class="sales-photo" src="<?= e($salesPhotoUrl) ?>" alt="<?= e($p['sales_name']) ?>" loading="lazy" />
             <?php else: ?>
               <div class="sales-photo sales-photo-fallback" aria-hidden="true">S</div>
             <?php endif; ?>
@@ -347,17 +438,19 @@ $waText = "Halo, saya tertarik dengan properti: " . ($p['title'] ?? '') . " (" .
 </section>
 
 <?php
+// Schema.org
 $imageUrls = [];
 foreach ($images as $src) {
   if (!str_starts_with($src, 'data:')) $imageUrls[] = abs_url($src);
 }
 $schemaImage = $imageUrls ?: [abs_url($page_image ?? 'Assets/logo.png')];
+
 $schema = [
   '@context' => 'https://schema.org',
   '@type' => 'RealEstateListing',
   'name' => $p['title'] ?? 'Properti',
   'description' => $page_description,
-  'url' => $page_canonical,
+  'url' => abs_url($page_canonical),
   'image' => $schemaImage,
   'address' => [
     '@type' => 'PostalAddress',
@@ -371,6 +464,7 @@ $schema = [
   ],
 ];
 ?>
+
 <script type="application/ld+json">
 <?= json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>
 </script>
@@ -390,6 +484,11 @@ $schema = [
 
   const currentEl = stage.querySelector('.mc-current');
   const totalEl = stage.querySelector('.mc-total');
+  const mediaWrap = stage.closest('.property-media');
+  const menuWrap = mediaWrap ? mediaWrap.querySelector('.mc-menu') : null;
+  const menuBtn = menuWrap ? menuWrap.querySelector('.mc-menu-btn') : null;
+  const menuPanel = menuWrap ? menuWrap.querySelector('.mc-menu-panel') : null;
+  const shareBtn = menuWrap ? menuWrap.querySelector('[data-share]') : null;
 
   // Lightbox
   const lb = document.getElementById('lightbox');
@@ -397,6 +496,9 @@ $schema = [
   const lbOpen = lb ? lb.querySelector('.lb-open') : null;
   const lbPrev = lb ? lb.querySelector('.lb-nav.prev') : null;
   const lbNext = lb ? lb.querySelector('.lb-nav.next') : null;
+  const shareModal = document.getElementById('share-modal');
+  const shareModalText = shareModal ? shareModal.querySelector('.mc-modal-text') : null;
+  if (shareModal) shareModal.hidden = true;
 
   const items = thumbs.length
     ? thumbs.map(t => ({
@@ -470,6 +572,83 @@ $schema = [
     document.body.style.overflow = '';
   }
 
+  function openShareModal(){
+    if (!shareModal) return;
+    shareModal.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeShareModal(){
+    if (!shareModal) return;
+    shareModal.hidden = true;
+    document.body.style.overflow = '';
+  }
+
+  function closeMenu(){
+    if (!menuBtn || !menuPanel) return;
+    menuBtn.setAttribute('aria-expanded', 'false');
+    menuPanel.setAttribute('aria-hidden', 'true');
+  }
+
+  function toggleMenu(){
+    if (!menuBtn || !menuPanel) return;
+    const isOpen = menuBtn.getAttribute('aria-expanded') === 'true';
+    menuBtn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+    menuPanel.setAttribute('aria-hidden', isOpen ? 'true' : 'false');
+  }
+
+  async function copyText(text){
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch (e) {
+        // fallback below
+      }
+    }
+
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '-9999px';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+
+    let ok = false;
+    try {
+      ok = document.execCommand('copy');
+    } catch (e) {
+      ok = false;
+    }
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  async function sharePage(){
+    const title = document.title || '';
+    const url = window.location.href;
+    closeMenu();
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, url });
+        return;
+      } catch (e) {
+        // user canceled or share failed, fallback below
+      }
+    }
+
+    const copied = await copyText(url);
+    if (shareModalText) {
+      shareModalText.textContent = copied
+        ? 'Tautan berhasil disalin ke clipboard.'
+        : 'Gagal menyalin otomatis. Silakan salin dari address bar.';
+    }
+    openShareModal();
+  }
+
   // thumb click
   thumbs.forEach(t => {
     t.addEventListener('click', () => {
@@ -490,6 +669,16 @@ $schema = [
     openLightbox();
   });
 
+  // menu
+  if (menuBtn) menuBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleMenu(); });
+  if (shareBtn) shareBtn.addEventListener('click', (e) => { e.stopPropagation(); sharePage(); });
+  document.addEventListener('click', (e) => {
+    if (!menuWrap || !menuPanel) return;
+    if (menuPanel.getAttribute('aria-hidden') === 'true') return;
+    if (menuWrap.contains(e.target)) return;
+    closeMenu();
+  });
+
   // close lightbox
   if (lb){
     lb.addEventListener('click', (e) => {
@@ -501,16 +690,32 @@ $schema = [
     if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
   }
 
+  // close share modal
+  if (shareModal){
+    shareModal.addEventListener('click', (e) => {
+      if (!e.target) return;
+      if (e.target.matches('[data-close]')) closeShareModal();
+    });
+  }
+
   // lightbox prev/next
   if (lbPrev) lbPrev.addEventListener('click', (e) => { e.stopPropagation(); setActive(index - 1); });
   if (lbNext) lbNext.addEventListener('click', (e) => { e.stopPropagation(); setActive(index + 1); });
 
   // keyboard (saat lightbox terbuka)
   document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (shareModal && !shareModal.hidden) closeShareModal();
+      if (lb && !lb.hidden) closeLightbox();
+    }
     if (!lb || lb.hidden) return;
-    if (e.key === 'Escape') closeLightbox();
     if (e.key === 'ArrowLeft') setActive(index - 1);
     if (e.key === 'ArrowRight') setActive(index + 1);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    closeMenu();
   });
 
   // init

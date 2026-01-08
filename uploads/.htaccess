@@ -1,11 +1,5 @@
-php_flag engine off
-  RemoveHandler .php .phtml .phar
+Options -Indexes
 
-  <FilesMatch "\.(php|phtml|phar)$">
-    Require all denied
-  </FilesMatch>
-
-  <FilesMatch "\.(jpe?g|png|webp)$">
-    Require all granted
-  </FilesMatch>
-
+<FilesMatch "\.(php|phtml|phar)$">
+  Deny from all
+</FilesMatch>
